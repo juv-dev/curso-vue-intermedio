@@ -1,1 +1,1 @@
-# curso-tanstack-query
+# curso-vue-intermedio

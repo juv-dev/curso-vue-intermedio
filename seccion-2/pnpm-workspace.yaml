@@ -1,0 +1,8 @@
+packages:
+  - .
+
+ignoredBuiltDependencies:
+  - vue-demi
+
+pnpm:
+  minimum-release-age: 1440
