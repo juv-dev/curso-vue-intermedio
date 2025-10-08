@@ -6,6 +6,8 @@ import type { PokemonListResponse, Pokemon, PokemonResponse } from "../interface
 export const getPokemons = async(): Promise<Pokemon[]> => {
     // await sleep(2);
 
+    // throw new Error('Error al obtener los pokemons');
+
     const { data }  = await pokemonApi.get<PokemonListResponse>('/pokemon?limit=45');
 
     const pokemonPromises: Promise<Pokemon> [] = [];
@@ -29,4 +31,14 @@ export const getPokemons = async(): Promise<Pokemon[]> => {
 
     return pokemons;
 
+}
+
+export const getPokemonByID = async( id: string ): Promise<Pokemon> => {
+    const { data } = await pokemonApi.get<PokemonResponse>(`/pokemon/${id}`);
+    return {
+        id:             data.id,
+        name:           data.name,
+        frontSprite:    data.sprites.front_default
+    }
+  
 }
