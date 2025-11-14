@@ -1,6 +1,7 @@
 import axios from 'axios';
 import pokemonApi from '../api/pokemonApi';
 import type { PokemonListResponse, Pokemon, PokemonResponse } from "../interfaces/";
+import { sleep } from './sleep';
 // import { sleep } from './sleep';
 
 export const getPokemons = async(): Promise<Pokemon[]> => {
@@ -34,6 +35,7 @@ export const getPokemons = async(): Promise<Pokemon[]> => {
 }
 
 export const getPokemonByID = async( id: string ): Promise<Pokemon> => {
+    //  await sleep(2);
     const { data } = await pokemonApi.get<PokemonResponse>(`/pokemon/${id}`);
     return {
         id:             data.id,
