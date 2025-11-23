@@ -2,10 +2,10 @@ import axios from 'axios';
 import pokemonApi from '../api/pokemonApi';
 import type { PokemonListResponse, Pokemon, PokemonResponse } from "../interfaces/";
 import { sleep } from './sleep';
-// import { sleep } from './sleep';
+
 
 export const getPokemons = async(): Promise<Pokemon[]> => {
-    // await sleep(2);
+    await sleep(4);
 
     // throw new Error('Error al obtener los pokemons');
 
