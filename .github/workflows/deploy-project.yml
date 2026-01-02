@@ -3,6 +3,7 @@ name: Deploy Project
 on:
   workflow_run:
     workflows: ["Build Project"]
+    branches: [main, develop]  # Añade esta línea
     types: [completed]
   push:
     branches: [main, develop]
