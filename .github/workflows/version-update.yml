@@ -7,95 +7,91 @@ on:
     paths:
       - '**/package.json'
       - '!**/node_modules/**'
-      - '!**/.github/**'
 
 jobs:
   version-update:
     name: Update Version and Create Tag
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-          run_install: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '>=22.0.0'
-          cache: 'pnpm'
+          cache: 'npm'
 
-      - name: Find projects with package.json
-        id: find-projects
-        run: |
-          projects=$(find . -name "package.json" -not -path "*/node_modules/*" -not -path "./.github/*" -exec dirname {} \; | sed 's|^\./||' | jq -R -s -c 'split("\n") | map(select(. != ""))')
-          echo "projects=$projects" >> $GITHUB_OUTPUT
-          echo "Found projects: $projects"
+      - name: Get PR commits
+        id: get_pr_commits
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: commits } = await github.rest.repos.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              per_page: 10
+            });
+            
+            const prCommits = commits.filter(commit => 
+              commit.commit.message.startsWith('feat:') || 
+              commit.commit.message.startsWith('feat(')
+            );
+            
+            return { 
+              hasFeat: prCommits.length > 0,
+              commitMessages: commits.map(c => c.commit.message)
+            };
 
-      - name: Process each project
+      - name: Bump version
+        id: bump-version
+        if: steps.get_pr_commits.outputs.hasFeat == 'true'
         run: |
-          for project in ${{ steps.find-projects.outputs.projects }}; do
-            if [ -d "$project" ]; then
-              echo "🔍 Processing project: $project"
-              cd "$project"
-              
-              if [ -f "package.json" ]; then
-                # Obtener la versión actual
-                CURRENT_VERSION=$(node -p "require('./package.json').version")
-                echo "Current version: $CURRENT_VERSION"
-                
-                # Incrementar versión (solo patch por ahora)
-                IFS='.' read -r major minor patch <<< "${CURRENT_VERSION//[^0-9.]/}"
-                NEW_VERSION="$major.$minor.$((patch + 1))"
-                echo "New version: $NEW_VERSION"
-                
-                # Actualizar el package.json
-                pnpm version $NEW_VERSION --no-git-tag-version
-              else
-                echo "ℹ️ No package.json found in $project"
-                continue
-              fi
-              
-              cd "$GITHUB_WORKSPACE"
-            else
-              echo "⚠️ Project directory not found: $project"
-            fi
-          done
+          # Obtener la versión actual
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Incrementar según el tipo de cambio
+          IFS='.' read -r major minor patch <<< "${CURRENT_VERSION//[^0-9.]/}"
+          
+          if [[ "${{ steps.get_pr_commits.outputs.hasFeat }}" == "true" ]]; then
+            # Para features, incrementar minor y resetear patch
+            minor=$((minor + 1))
+            patch=0
+          else
+            # Para fixes, incrementar patch
+            patch=$((patch + 1))
+          fi
+          
+          NEW_VERSION="$major.$minor.$patch"
+          echo "New version: $NEW_VERSION"
+          
+          # Actualizar el package.json
+          npm version $NEW_VERSION --no-git-tag-version
+          
+          # Configurar las salidas
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "version_updated=true" >> $GITHUB_OUTPUT
 
-      - name: Commit and tag changes
+      - name: Configure Git
+        if: steps.bump-version.outputs.version_updated == 'true'
         run: |
-          # Configurar Git
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
-          
-          # Agregar todos los cambios
-          git add .
-          
-          # Verificar si hay cambios para hacer commit
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: bump versions [skip ci]"
-            git push origin main
-            echo "✅ Changes pushed to main"
-          else
-            echo "ℹ️ No changes to commit"
-          fi
 
-          # Crear tags
-          for project in ${{ steps.find-projects.outputs.projects }}; do
-            if [ -d "$project" ] && [ -f "$project/package.json" ]; then
-              cd "$project"
-              VERSION=$(node -p "require('./package.json').version")
-              git tag -a "v$VERSION" -m "Version $VERSION"
-              cd "$GITHUB_WORKSPACE"
-            fi
-          done
-          
-          # Empujar tags
+      - name: Commit and tag
+        if: steps.bump-version.outputs.version_updated == 'true'
+        run: |
+          git add package.json
+          git commit -m "chore: bump version to ${{ steps.bump-version.outputs.new_version }} [skip ci]"
+          git tag -a "v${{ steps.bump-version.outputs.new_version }}" -m "Version ${{ steps.bump-version.outputs.new_version }}"
+          git push origin main
           git push --tags
-          echo "✅ Tags pushed"
+
+      - name: Show commit messages
+        run: |
+          echo "Commit messages in this PR:"
+          echo "${{ steps.get_pr_commits.outputs.commitMessages }}"

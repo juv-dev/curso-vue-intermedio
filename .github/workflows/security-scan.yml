@@ -19,7 +19,7 @@ jobs:
           version: 8
           run_install: true
 
-      - name: Find and audit projects
+      - name: Run security audit
         run: |
           # Lista de proyectos a analizar
           projects=("vue-ts-pokemon" "vue-ts-pinia-intro" "vue-ts-issues-app")
@@ -36,7 +36,8 @@ jobs:
               cd "$project"
               if [ -f "package.json" ]; then
                 echo "📦 Installing dependencies..."
-                pnpm install --frozen-lockfile
+                # Usamos --no-frozen-lockfile para evitar el error de autoInstallPeers
+                pnpm install --no-frozen-lockfile
                 echo "🔒 Running security audit..."
                 pnpm audit || echo "⚠️ Security audit found vulnerabilities in $project"
               else
