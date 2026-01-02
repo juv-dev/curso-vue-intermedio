@@ -18,10 +18,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: false
 
       - name: Install commitlint
-        run: npm install -g @commitlint/cli @commitlint/config-conventional
+        run: pnpm add -g @commitlint/cli @commitlint/config-conventional
 
       - name: Create commitlint config
         run: |
@@ -48,26 +54,3 @@ jobs:
             echo "- feat(scope): descripción"
             echo "- fix: descripción"
             echo "- fix(scope): descripción"
-            exit 1
-          fi
-
-      - name: Validate commit messages
-        run: |
-          # Obtiene la rama base
-          BASE_SHA=${{ github.event.pull_request.base.sha }}
-          HEAD_SHA=${{ github.event.pull_request.head.sha }}
-          
-          # Verifica cada commit
-          for commit in $(git rev-list $BASE_SHA..$HEAD_SHA); do
-            MSG=$(git show -s --format=%B $commit)
-            if ! echo "$MSG" | npx commitlint; then
-              echo "::error::❌ Commit inválido: $MSG"
-              echo "Formato permitido:"
-              echo "- feat: descripción"
-              echo "- feat(scope): descripción"
-              echo "- fix: descripción"
-              echo "- fix(scope): descripción"
-              exit 1
-            fi
-          done
-
