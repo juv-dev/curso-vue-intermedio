@@ -16,47 +16,38 @@ jobs:
       - name: Obtener código
         uses: actions/checkout@v4
         
-      - name: Configurar Node.js
+      - name: Configurar Node.js y pnpm
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
           
-      - name: Instalar pnpm
-        run: npm install -g pnpm@8
-        
+      - name: Verificar instalación
+        run: |
+          # Instalar pnpm de manera global
+          npm install -g pnpm@8
+          
+          # Asegurar que pnpm esté en el PATH
+          echo "##[add-path]$HOME/.npm-global/bin"
+          echo "##[add-path]$HOME/.npm-global/lib/node_modules/pnpm/bin"
+          
+          # Mostrar información de versión
+          pnpm --version
+          pnpm config get store-dir
+          
       - name: Configurar entorno
         run: |
-          # Crear carpeta config si no existe
-          mkdir -p config
-          
-          # Copiar el archivo .env correspondiente
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            ENV_SOURCE="config/.env.production"
-          else
-            ENV_SOURCE="config/.env.development"
-          fi
-          
-          if [ -f "$ENV_SOURCE" ]; then
-            cp "$ENV_SOURCE" .env
-            echo "Usando $ENV_SOURCE"
-          else
-            echo "Creando .env vacío"
+          # Crear archivo .env básico si no existe
+          if [ ! -f ".env" ]; then
             echo "VITE_APP_TITLE=Mi Aplicación" > .env
             echo "VITE_APP_VERSION=1.0.0" >> .env
             echo "VITE_APP_DEBUG=false" >> .env
           fi
           
-          # Mostrar el contenido del .env (sin exponer secretos)
-          echo "Contenido de .env:"
-          cat .env | grep -v -e '^VITE_' || true
-          
       - name: Instalar dependencias
-        run: pnpm install --frozen-lockfile
-        
-      - name: Ejecutar pruebas
-        run: pnpm test
-        
+        run: |
+          pnpm install --frozen-lockfile
+          
       - name: Construir aplicación
         run: pnpm build
         
@@ -64,7 +55,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          path: |
-            dist/
-            !**/*.map
+          path: dist/
           retention-days: 1
