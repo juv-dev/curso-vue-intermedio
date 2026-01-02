@@ -2,7 +2,7 @@ name: Deploy Project
 
 on:
   workflow_run:
-    workflows: ["Validate Permissions"]
+    workflows: ["Build Project"]
     types: [completed]
   push:
     branches: [main, develop]
