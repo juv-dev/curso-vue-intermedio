@@ -1,4 +1,4 @@
-name: validate-permissions
+name: Validate Permissions
 
 on:
   workflow_run:
