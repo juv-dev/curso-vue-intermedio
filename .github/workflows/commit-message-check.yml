@@ -6,30 +6,26 @@ on:
 
 jobs:
   check-commit:
-    name: Validate Commit Messages
+    name: Validar Mensajes de Commit
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Obtener código
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
+      # Primero configuramos Node.js
+      - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
+          cache: 'npm'  # Usamos npm para cachear
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-          run_install: false
+      # Instalar commitlint globalmente con npm
+      - name: Instalar commitlint
+        run: npm install -g @commitlint/cli @commitlint/config-conventional
 
-      - name: Install commitlint
-        run: pnpm add -g @commitlint/cli @commitlint/config-conventional
-
-      - name: Create commitlint config
+      - name: Crear configuración commitlint
         run: |
           echo '{
             "extends": ["@commitlint/config-conventional"],
@@ -42,15 +38,16 @@ jobs:
             }
           }' > .commitlintrc.json
 
-      - name: Validate PR title
+      - name: Validar título del PR
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          # Revisa el título del PR
           if ! echo "$PR_TITLE" | npx commitlint --edit -; then
             echo "::error::❌ El título del PR debe seguir el formato: 'tipo(scope): descripción'"
-            echo "Formato permitido:"
+            echo "Formatos permitidos:"
             echo "- feat: descripción"
             echo "- feat(scope): descripción"
             echo "- fix: descripción"
             echo "- fix(scope): descripción"
+            exit 1
+          fi
