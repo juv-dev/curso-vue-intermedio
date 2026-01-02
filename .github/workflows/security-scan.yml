@@ -1,13 +1,11 @@
 name: Security Scan
-
 on:
   pull_request:
     branches: [main, develop]
     types: [opened, synchronize, reopened]
   workflow_dispatch:
-
 jobs:
-  security:  # Nombre del job que debe coincidir con el check requerido
+  security:  # Este es el ID que debe coincidir con el check requerido
     name: Security Audit
     runs-on: ubuntu-latest
     
