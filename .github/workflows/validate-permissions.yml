@@ -6,22 +6,15 @@ on:
     types: [completed]
   pull_request:
     branches: [main, develop]
-    types: [opened, synchronize, reopened]
-  workflow_dispatch:
 
 jobs:
-  validate-permissions:
-    name: Validate Permissions
+  validate-branch:
     runs-on: ubuntu-latest
     steps:
-      - name: Check PR author
-        run: |
-          echo "Running basic validation checks..."
-          echo "PR author: ${{ github.actor}}"
-          
-      - name: Check branch protection
+      - name: Validate target branch
         run: |
           if [ "${{ github.base_ref }}" != "main" ] && [ "${{ github.base_ref }}" != "develop" ]; then
-            echo "Error: PR must target main or develop"
+            echo "Error: PR must target main or develop, but got ${{ github.base_ref }}"
             exit 1
           fi
+          echo "Valid target branch: ${{ github.base_ref }}"
