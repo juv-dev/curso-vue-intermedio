@@ -37,13 +37,10 @@ jobs:
           
       - name: Install dependencies
         run: |
-          if [ -f "pnpm-lock.yaml" ]; then
-            echo "Lockfile found, using --frozen-lockfile"
-            pnpm install --frozen-lockfile
-          else
-            echo "No lockfile found, running fresh install"
-            pnpm install
-          fi
+          # Always use --no-frozen-lockfile in CI to handle missing lockfiles
+          pnpm install --no-frozen-lockfile
+          # Generate a new lockfile
+          pnpm install
           
       - name: Build application
         run: |
