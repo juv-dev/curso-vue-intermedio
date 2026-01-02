@@ -1,33 +1,32 @@
-name: Check Commit Message
+name: Check PR Title
 on:
   pull_request:
     branches: [main, develop]
     types: [opened, synchronize, reopened, edited]
 
 jobs:
-  validate-commit-message:
-    name: Validar Mensajes de Commit
+  validate-pr-title:
+    name: Validar Título del PR
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Validate PR title
         uses: actions/github-script@v7
         with:
           script: |
             const { title } = context.payload.pull_request;
             const validTypes = ['feat', 'fix'];
-            const pattern = new RegExp(`^(${validTypes.join('|')})(\\([a-z0-9-]+\\))?: .{1,100}$`);
+            const pattern = new RegExp(`^(${validTypes.join('|')})(\\([a-z0-9-]+\\))?: [a-zA-Z0-9- ]+$`);
             
             if (!pattern.test(title)) {
               core.setFailed(`❌ El título del PR debe seguir el formato: 'tipo(ámbito): descripción'\n` +
-                `Formatos válidos:\n` +
-                `- feat: descripción\n` +
-                `- feat(ámbito): descripción\n` +
-                `- fix: descripción\n` +
-                `- fix(ámbito): descripción`);
+                `Donde:\n` +
+                `- 'tipo' puede ser: ${validTypes.join(' o ')}\n` +
+                `- 'ámbito' es opcional y debe estar en minúsculas con guiones\n` +
+                `- 'descripción' debe ser una descripción corta\n\n` +
+                `Ejemplos válidos:\n` +
+                `- feat: agregar nueva funcionalidad\n` +
+                `- fix(ui): corregir error en el menú`);
             } else {
               console.log('✅ El título del PR es válido');
             }
