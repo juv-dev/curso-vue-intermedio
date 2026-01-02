@@ -4,7 +4,7 @@ import PokemonCard from './PokemonCard.vue';
 
 
 interface Props {
-    pokemons: Pokemon[];
+	pokemons: Pokemon[];
 }
 
 defineProps<Props>();
@@ -12,21 +12,16 @@ defineProps<Props>();
 </script>
 
 <template>
-    <div class="card-list">
-        <PokemonCard
-            class="card" 
-            v-for="pokemon of $props.pokemons" 
-            :key="pokemon.id" :pokemon="pokemon"/>
-    </div>
+	<div class="card-list">
+		<PokemonCard class="card" v-for="pokemon of $props.pokemons" :key="pokemon.id" :pokemon="pokemon" />
+	</div>
 
 </template>
 
 <style scoped>
-
 .card-list {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
 }
-
 </style>

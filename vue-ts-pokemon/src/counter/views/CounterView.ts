@@ -1,17 +1,17 @@
 import { defineComponent, ref } from "vue";
 
 export default defineComponent({
-  setup() {
+	setup() {
 
-    const counter = ref(5);
+		const counter = ref(5);
 
-    const increase = () => {
-      counter.value++;
-    }
+		const increase = () => {
+			counter.value++;
+		}
 
-    return {
-      counter,
-      increase,
-    }
-  }
+		return {
+			counter,
+			increase,
+		}
+	}
 });

@@ -28,8 +28,8 @@
 
 
 <template>
-  <h1>Counter View: {{ counter }} </h1>
-  <!-- <button @click="increase">+1</button> -->
-  <button @click="counter++">+1</button>
+	<h1>Counter View: {{ counter }} </h1>
+	<!-- <button @click="increase">+1</button> -->
+	<button @click="counter++">+1</button>
 
 </template>
