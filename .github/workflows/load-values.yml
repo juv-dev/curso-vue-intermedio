@@ -1,4 +1,4 @@
-name: Deploy / load-values
+name: Load Values
 
 on:
   push:
@@ -7,14 +7,12 @@ on:
 
 jobs:
   load-values:
-    name: Load Environment Values
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      - name: Generate environment file
+      
+      - name: Load environment values
         run: |
           if [ "${{ github.ref_name }}" = "main" ]; then
             ENV_FILE=".env.production"
@@ -23,16 +21,13 @@ jobs:
           fi
           
           if [ -f "$ENV_FILE" ]; then
-            cp $ENV_FILE .env
-            echo "Using $ENV_FILE"
+            echo "Loading values from $ENV_FILE"
+            # Set environment variables from file
+            while IFS= read -r line; do
+              if [[ ! -z "$line" ]] && [[ ! "$line" =~ ^\s*# ]]; then
+                echo "$line" >> $GITHUB_ENV
+              fi
+            done < "$ENV_FILE"
           else
-            echo "Using default .env"
-            touch .env
+            echo "Warning: $ENV_FILE not found"
           fi
-          
-      - name: Upload environment file
-        uses: actions/upload-artifact@v4
-        with:
-          name: env-file
-          path: .env
-          retention-days: 1
