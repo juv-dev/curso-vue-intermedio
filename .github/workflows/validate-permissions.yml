@@ -1,6 +1,9 @@
 name: Validate Permissions
 
 on:
+  workflow_run:
+    workflows: ["Load Values"]
+    types: [completed]
   pull_request:
     branches:
       - main
