@@ -1,0 +1,73 @@
+name: Check Commit Message
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  check-commit:
+    name: Validate Commit Messages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install commitlint
+        run: npm install -g @commitlint/cli @commitlint/config-conventional
+
+      - name: Create commitlint config
+        run: |
+          echo '{
+            "extends": ["@commitlint/config-conventional"],
+            "rules": {
+              "type-enum": [2, "always", ["feat", "fix"]],
+              "header-max-length": [2, "always", 100],
+              "scope-case": [2, "always", "lower-case"],
+              "subject-case": [0],
+              "scope-empty": [0]
+            }
+          }' > .commitlintrc.json
+
+      - name: Validate PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # Revisa el título del PR
+          if ! echo "$PR_TITLE" | npx commitlint --edit -; then
+            echo "::error::❌ El título del PR debe seguir el formato: 'tipo(scope): descripción'"
+            echo "Formato permitido:"
+            echo "- feat: descripción"
+            echo "- feat(scope): descripción"
+            echo "- fix: descripción"
+            echo "- fix(scope): descripción"
+            exit 1
+          fi
+
+      - name: Validate commit messages
+        run: |
+          # Obtiene la rama base
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          
+          # Verifica cada commit
+          for commit in $(git rev-list $BASE_SHA..$HEAD_SHA); do
+            MSG=$(git show -s --format=%B $commit)
+            if ! echo "$MSG" | npx commitlint; then
+              echo "::error::❌ Commit inválido: $MSG"
+              echo "Formato permitido:"
+              echo "- feat: descripción"
+              echo "- feat(scope): descripción"
+              echo "- fix: descripción"
+              echo "- fix(scope): descripción"
+              exit 1
+            fi
+          done
+
