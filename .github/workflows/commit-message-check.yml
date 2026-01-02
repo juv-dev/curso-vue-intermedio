@@ -10,37 +10,24 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Validate PR title
-        uses: docker://node:20-alpine
-        with:
-          entrypoint: /bin/sh
-          args: -c |
-            # Instalar commitlint globalmente
-            npm install -g @commitlint/cli @commitlint/config-conventional
-            
-            # Crear configuración
-            cat > /tmp/commitlint.config.js << 'EOL'
-module.exports = {
-  extends: ['@commitlint/config-conventional'],
-  rules: {
-    'type-enum': [2, 'always', ['feat', 'fix']],
-    'header-max-length': [2, 'always', 100],
-    'scope-case': [2, 'always', 'kebab-case'],
-    'subject-case': [0],
-    'scope-empty': [0]
-  }
-};
-EOL
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            # Validar título
-            echo "Validando: ${{ github.event.pull_request.title }}"
-            echo "${{ github.event.pull_request.title }}" | commitlint --edit -c /tmp/commitlint.config.js || {
-              echo "::error::❌ El título del PR debe seguir el formato: 'tipo(ámbito): descripción'"
-              echo "Formatos válidos:"
-              echo "- feat: descripción"
-              echo "- feat(ámbito): descripción"
-              echo "- fix: descripción"
-              echo "- fix(ámbito): descripción"
-              exit 1
+      - name: Validate PR title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { title } = context.payload.pull_request;
+            const validTypes = ['feat', 'fix'];
+            const pattern = new RegExp(`^(${validTypes.join('|')})(\\([a-z0-9-]+\\))?: .{1,100}$`);
+            
+            if (!pattern.test(title)) {
+              core.setFailed(`❌ El título del PR debe seguir el formato: 'tipo(ámbito): descripción'\n` +
+                `Formatos válidos:\n` +
+                `- feat: descripción\n` +
+                `- feat(ámbito): descripción\n` +
+                `- fix: descripción\n` +
+                `- fix(ámbito): descripción`);
+            } else {
+              console.log('✅ El título del PR es válido');
             }
-            echo "✅ El título del PR es válido"
