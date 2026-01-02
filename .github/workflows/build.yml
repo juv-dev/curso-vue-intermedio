@@ -1,6 +1,9 @@
 name: Build
 
 on:
+  workflow_run:
+    workflows: ["Deploy / deploy"]
+    types: [completed]
   push:
     branches: [main, develop]
   pull_request:

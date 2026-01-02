@@ -1,6 +1,9 @@
 name: Deploy / validate-permissions
 
 on:
+  workflow_run:
+    workflows: ["env-loader"]
+    types: [completed]
   pull_request:
     branches: [main, develop]
     types: [opened, synchronize, reopened]

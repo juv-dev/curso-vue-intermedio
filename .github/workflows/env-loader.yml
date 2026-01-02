@@ -1,6 +1,9 @@
 name: Load Environment
 
 on:
+  workflow_run:
+    workflows: ["PR Title Check"]
+    types: [completed]
   push:
     branches: [main, develop]
   workflow_dispatch:
