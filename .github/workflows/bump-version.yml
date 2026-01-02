@@ -60,7 +60,7 @@ jobs:
           
           # Commit changes
           git add package.json
-          git commit -m "chore: bump version to ${{ steps.version.outputs.version }} [skip ci]"
+          git commit -m "feat: bump version to ${{ steps.version.outputs.version }} [skip ci]"
           
           # Push changes to PR branch
           git push origin "HEAD:refs/heads/$PR_HEAD_REF"

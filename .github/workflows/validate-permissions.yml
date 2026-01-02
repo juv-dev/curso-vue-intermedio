@@ -4,31 +4,32 @@ on:
   workflow_run:
     workflows: ["Load Values"]
     types: [completed]
+
   pull_request:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
 
 jobs:
   validate-branch:
     runs-on: ubuntu-latest
+
+    # 👉 SOLO valida cuando el evento es pull_request
+    if: github.event_name == 'pull_request'
+
     steps:
       - name: Validate target branch
         run: |
-          echo "Base ref: ${{ github.base_ref }}"
           echo "Event name: ${{ github.event_name }}"
-          echo "Ref: ${{ github.ref }}"
-          
-          # For pull_request events, the base ref is in github.base_ref
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            TARGET_BRANCH="${{ github.base_ref || github.event.pull_request.base.ref }}"
-          else
-            TARGET_BRANCH="${GITHUB_REF#refs/heads/}"
-          fi
-          
+          echo "Base ref: ${{ github.base_ref }}"
+
+          TARGET_BRANCH="${{ github.base_ref }}"
+
           echo "Target branch: $TARGET_BRANCH"
-          
+
           if [ "$TARGET_BRANCH" != "main" ] && [ "$TARGET_BRANCH" != "develop" ]; then
-            echo "Error: PR must target main or develop, but got '$TARGET_BRANCH'"
+            echo "❌ Error: PR must target main or develop, but got '$TARGET_BRANCH'"
             exit 1
           fi
-          
-          echo "Valid target branch: $TARGET_BRANCH"
+
+          echo "✅ Valid target branch: $TARGET_BRANCH"
