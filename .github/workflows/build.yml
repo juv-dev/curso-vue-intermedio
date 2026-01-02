@@ -3,7 +3,7 @@ name: Build Project
 
 on:
   workflow_run:
-    workflows: ["Deploy Application"]
+    workflows: ["Deploy Project"]
     types: [completed]
   push:
     branches: [main, develop]
