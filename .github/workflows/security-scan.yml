@@ -11,8 +11,7 @@ jobs:
     name: Check Actions Limit
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Verify and update limits
         env:
@@ -33,12 +32,33 @@ jobs:
     if: always()
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Check for package.json
+        id: check_package
+        run: |
+          if [ -f "package.json" ]; then
+            echo "package_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "package_exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up Node.js
+        if: steps.check_package.outputs.package_exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '>=22.0.0'
           cache: 'npm'
+
       - name: Install dependencies
+        if: steps.check_package.outputs.package_exists == 'true'
         run: npm install
+
       - name: Run security audit
+        if: steps.check_package.outputs.package_exists == 'true'
         run: npm audit --audit-level=high
+
+      - name: Skip security audit
+        if: steps.check_package.outputs.package_exists != 'true'
+        run: |
+          echo "No package.json found. Skipping security audit."
+          echo "This is not an error - this project doesn't use npm packages."
