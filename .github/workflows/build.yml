@@ -11,6 +11,7 @@ jobs:
   build:
     name: Build Application
     runs-on: ubuntu-latest
+    container: node:20-slim
     env:
       NODE_OPTIONS: --max_old_space_size=4096
       
@@ -18,17 +19,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Setup Node.js with pnpm
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-          
-      - name: Install pnpm explicitly
-        run: |
-          npm install -g pnpm@8
-          pnpm --version
-          
+      - name: Install pnpm
+        run: npm install -g pnpm@8
+        
+      - name: Verify pnpm
+        run: pnpm --version
+        
       - name: Download environment file
         uses: actions/download-artifact@v4
         with:
@@ -36,10 +32,8 @@ jobs:
           path: ./
           
       - name: Install dependencies
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm --version
-          
+        run: pnpm install --frozen-lockfile
+        
       - name: Run tests
         run: pnpm test
         
