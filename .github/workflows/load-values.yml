@@ -1,57 +1,33 @@
-name: Load Values
+name: Load values
 
 on:
   push:
     branches: [main, develop]
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to load'
-        required: true
-        default: 'development'
-        type: choice
-        options:
-        - development
-        - production
 
 jobs:
   load-values:
     name: Load values
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Load environment values
+      - name: Setup environment
         run: |
-          if [ "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || github.ref_name == 'main' && 'production' || 'development' }}" = "production" ]; then
-            ENV_FILE=".env.production"
+          # Create config directory if it doesn't exist
+          mkdir -p config
+          
+          # Determine which file to use
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "Using production"
+            cp .env.production config/.env 2>/dev/null || touch config/.env
           else
-            ENV_FILE=".env.development"
+            echo "Using development"
+            cp .env.development config/.env 2>/dev/null || touch config/.env
           fi
           
-          echo "Using environment: $ENV_FILE"
-          
-          if [ -f "$ENV_FILE" ]; then
-            echo "Loading values from $ENV_FILE"
-            # Create config directory if it doesn't exist
-            mkdir -p config
-            # Copy the environment file
-            cp "$ENV_FILE" config/.env
-            echo "Created/updated config/.env"
-          else
-            echo "Warning: $ENV_FILE not found, creating empty .env"
-            mkdir -p config
-            touch config/.env
-          fi
-          
-          # Show the content (for debugging, but be careful with sensitive data)
+          # Show content (without sensitive data)
           echo "Environment file content:"
-          cat config/.env | grep -v '^#' || true
-          
-      - name: Upload environment file
-        uses: actions/upload-artifact@v4
-        with:
-          name: env-file
-          path: config/.env
-          retention-days: 1
+          grep -v '^#' config/.env || echo "File is empty"
