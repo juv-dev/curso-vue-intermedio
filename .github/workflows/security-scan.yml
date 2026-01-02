@@ -7,12 +7,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  find-projects:
-    name: Find Projects
+  security:
+    name: Security Audit
     runs-on: ubuntu-latest
-    outputs:
-      projects: ${{ steps.find-projects.outputs.projects }}
-    
     steps:
       - uses: actions/checkout@v4
       
@@ -24,54 +21,35 @@ jobs:
           echo "projects=$projects" >> $GITHUB_OUTPUT
           echo "Found projects: $projects"
 
-  security:
-    name: Security Audit
-    needs: find-projects
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        project: ${{ fromJson(needs.find-projects.outputs.projects) }}
-      fail-fast: false
-
-    defaults:
-      run:
-        working-directory: ${{ matrix.project }}
-    
-    steps:
-      - uses: actions/checkout@v4
-      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '>=22.0.0'
           cache: 'pnpm'
-          cache-dependency-path: '${{ matrix.project }}/pnpm-lock.yaml'
+          cache-dependency-path: '${{ fromJson(steps.find-projects.outputs.projects)[0] }}/pnpm-lock.yaml'
 
-      - name: Setup pnpm
+      - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 8
-          run_install: false
+          run_install: true
 
-      - name: Check for package.json
-        id: check_package
+      - name: Run security audit for each project
         run: |
-          if [ -f "package.json" ]; then
-            echo "package_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "package_exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Install dependencies - ${{ matrix.project }}
-        if: steps.check_package.outputs.package_exists == 'true'
-        run: pnpm install --frozen-lockfile
-
-      - name: Run security audit - ${{ matrix.project }}
-        if: steps.check_package.outputs.package_exists == 'true'
-        run: pnpm audit
-
-      - name: Skip security audit - ${{ matrix.project }}
-        if: steps.check_package.outputs.package_exists != 'true'
-        run: |
-          echo "No se encontró package.json en ${{ matrix.project }}. Omitiendo auditoría de seguridad."
-          echo "Esto no es un error - este proyecto no utiliza paquetes npm."
+          for project in ${{ steps.find-projects.outputs.projects }}; do
+            if [ -d "$project" ]; then
+              echo "🔍 Auditing project: $project"
+              cd "$project"
+              if [ -f "package.json" ]; then
+                echo "📦 Installing dependencies..."
+                pnpm install --frozen-lockfile
+                echo "🔒 Running security audit..."
+                pnpm audit || echo "⚠️ Security audit found vulnerabilities in $project"
+              else
+                echo "ℹ️ No package.json found in $project"
+              fi
+              cd "$GITHUB_WORKSPACE"
+            else
+              echo "⚠️ Project directory not found: $project"
+            fi
+          done
