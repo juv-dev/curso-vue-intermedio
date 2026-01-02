@@ -17,7 +17,7 @@ jobs:
         run: |
           echo "PR Head Ref: ${{ github.head_ref }}"
           echo "Base Ref: ${{ github.base_ref }}"
-          echo "Event: ${{ toJson(github.event) }}"
+          echo "Event Action: ${{ github.event.action }}"
 
       - uses: actions/checkout@v4
         with:
@@ -47,10 +47,7 @@ jobs:
       - name: Update version
         run: |
           # Get PR head ref
-          PR_HEAD_REF="${{ github.head_ref }}"
-          if [ -z "$PR_HEAD_REF" ]; then
-            PR_HEAD_REF=$(jq -r .pull_request.head.ref "$GITHUB_EVENT_PATH")
-          fi
+          PR_HEAD_REF="${{ github.head_ref || github.event.pull_request.head.ref }}"
           echo "PR Head Ref: $PR_HEAD_REF"
           
           # Update version in package.json
