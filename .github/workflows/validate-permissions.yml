@@ -1,0 +1,24 @@
+name: Deploy / validate-permissions
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  validate-permissions:
+    name: Validate Permissions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR author
+        run: |
+          echo "Running basic validation checks..."
+          echo "PR author: ${{ github.actor}}"
+          
+      - name: Check branch protection
+        run: |
+          if [ "${{ github.base_ref }}" != "main" ] && [ "${{ github.base_ref }}" != "develop" ]; then
+            echo "Error: PR must target main or develop"
+            exit 1
+          fi

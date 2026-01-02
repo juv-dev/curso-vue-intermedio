@@ -1,0 +1,38 @@
+name: Deploy / load-values
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  load-values:
+    name: Load Environment Values
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Generate environment file
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            ENV_FILE=".env.production"
+          else
+            ENV_FILE=".env.development"
+          fi
+          
+          if [ -f "$ENV_FILE" ]; then
+            cp $ENV_FILE .env
+            echo "Using $ENV_FILE"
+          else
+            echo "Using default .env"
+            touch .env
+          fi
+          
+      - name: Upload environment file
+        uses: actions/upload-artifact@v4
+        with:
+          name: env-file
+          path: .env
+          retention-days: 1
