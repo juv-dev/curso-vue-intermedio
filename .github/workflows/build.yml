@@ -36,7 +36,14 @@ jobs:
           echo "pnpm version: $(pnpm --version)"
           
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          if [ -f "pnpm-lock.yaml" ]; then
+            echo "Lockfile found, using --frozen-lockfile"
+            pnpm install --frozen-lockfile
+          else
+            echo "No lockfile found, running fresh install"
+            pnpm install
+          fi
           
       - name: Build application
         run: |
