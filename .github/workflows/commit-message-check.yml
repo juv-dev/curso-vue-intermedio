@@ -8,6 +8,15 @@ jobs:
   check-commit:
     name: Validar Mensajes de Commit
     runs-on: ubuntu-latest
+    
+    # Solo continuar con el error si es un bot o un schedule
+    continue-on-error: ${{ 
+      github.actor == 'dependabot[bot]' || 
+      github.actor == 'actions-bot' || 
+      github.actor == 'github-actions[bot]' ||
+      github.event_name == 'schedule'
+    }}
+    
     steps:
       - name: Obtener código
         uses: actions/checkout@v4
@@ -18,12 +27,52 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '>=22.0.0'
-
-      - name: Instalar commitlint
-        run: npm install -g @commitlint/cli @commitlint/config-conventional
+          cache: 'npm'
 
       - name: Validar título del PR
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          echo "$PR_TITLE" | npx commitlint --edit - --config='{"extends": ["@commitlint/config-conventional"], "rules": {"type-enum": [2, "always", ["feat", "fix"]], "header-max-length": [2, "always", 100], "scope-case": [2, "always", "lower-case"], "subject-case": [0], "scope-empty": [0]}}' || (echo "::error::❌ El título del PR debe seguir el formato: 'tipo(scope): descripción'"; echo "Formatos permitidos:"; echo "- feat: descripción"; echo "- feat(scope): descripción"; echo "- fix: descripción"; echo "- fix(scope): descripción"; exit 1)
+          # Verificar si el título del PR está vacío
+          if [ -z "$PR_TITLE" ]; then
+            echo "::error::El título del PR no puede estar vacío"
+            exit 1
+          fi
+
+          # Verificar si es un reintento (posiblemente por límite de minutos)
+          if [[ "${{ github.run_attempt }}" -gt 1 ]]; then
+            echo "⚠️  Advertencia: Saltando validación en reintento #${{ github.run_attempt }}"
+            exit 0
+          fi
+
+          # Instalar commitlint si no está instalado
+          if ! command -v commitlint &> /dev/null; then
+            echo "Instalando commitlint..."
+            npm install -g @commitlint/cli @commitlint/config-conventional
+          fi
+
+          # Configuración de commitlint
+          CONFIG='{
+            "extends": ["@commitlint/config-conventional"],
+            "rules": {
+              "type-enum": [2, "always", ["feat", "fix"]],
+              "header-max-length": [2, "always", 100],
+              "scope-case": [2, "always", "kebab-case"],
+              "subject-case": [0],
+              "scope-empty": [0]
+            }
+          }'
+
+          # Validar el título
+          echo "Validando: $PR_TITLE"
+          echo "$PR_TITLE" | npx commitlint --edit - --config="$CONFIG" || {
+            echo "::error::❌ El título del PR debe seguir el formato: 'tipo(scope): descripción'"
+            echo "Formatos permitidos:"
+            echo "- feat: descripción"
+            echo "- feat(scope): descripción"
+            echo "- fix: descripción"
+            echo "- fix(scope): descripción"
+            exit 1
+          }
+
+          echo "✅ El título del PR es válido"

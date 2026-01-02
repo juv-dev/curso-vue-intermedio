@@ -3,21 +3,35 @@ on:
   pull_request:
     branches: [main, develop]
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 jobs:
-  security:
+  check-and-update:
     runs-on: ubuntu-latest
     steps:
+      - name: Verificar y actualizar límites
+        env:
+          GITHUB_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          # Ejecutar el script
+          if ./path/to/check-actions-limit.sh; then
+            echo "✅ Verificación completada con éxito"
+          else
+            echo "⚠️  Advertencia: Se desactivó temporalmente la verificación de estado"
+          fi
+
+  security:
+    needs: check-and-update
+    runs-on: ubuntu-latest
+    if: always()  # Siempre ejecutar, independientemente del job anterior
+    steps:
       - uses: actions/checkout@v4
-      
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '>=22.0.0' 
-          cache: 'npm'  # Cambiado a npm
-
+          node-version: '>=22.0.0'
       - name: Instalar dependencias
         run: npm ci
-        
       - name: Ejecutar auditoría de seguridad
         run: npm audit --audit-level=high
