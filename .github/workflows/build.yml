@@ -1,8 +1,9 @@
-name: Build
+name: Build Project
+
 
 on:
   workflow_run:
-    workflows: ["Deploy Branch"]
+    workflows: ["Deploy Application"]
     types: [completed]
   push:
     branches: [main, develop]
@@ -11,7 +12,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-project:
     name: Build Application
     runs-on: ubuntu-latest
     
