@@ -2,51 +2,21 @@ name: Deploy Project
 
 on:
   push:
-    branches: [main, develop]
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        default: 'main'
-        type: choice
-        options:
-        - main
-        - develop
+    branches: [main]
+    paths:
+      - 'package.json'
 
 jobs:
   deploy:
-    name: Deploy Application
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || github.ref_name }}
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          
-      - name: Install pnpm
-        run: npm install -g pnpm@10.12.1
-        
-      - name: Install dependencies
+      - uses: actions/checkout@v4
+      
+      - name: Get version
+        id: version
+        run: echo "version=$(node -p 'require("./package.json").version')" >> $GITHUB_OUTPUT
+      
+      - name: Deploy
         run: |
-          # Always use --no-frozen-lockfile in CI to handle missing lockfiles
-          pnpm install --no-frozen-lockfile
-          # Generate a new lockfile
-          pnpm install
-          
-      - name: Build application
-        run: pnpm run build
-        
-      - name: Show deployment info
-        run: |
-          echo "Desplegando en entorno: ${{ github.event.inputs.environment || github.ref_name }}"
-          echo "Contenido del directorio dist:"
-          ls -la dist/
-          
-      - name: Complete deployment
-        run: echo "Despliegue completado exitosamente"
+          echo "🚀 Desplegando versión ${{ steps.version.outputs.version }}"
+          # Aquí van los pasos de despliegue reales
