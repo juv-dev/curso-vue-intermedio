@@ -20,12 +20,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
           
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
+        run: |
+          # Install pnpm globally using npm
+          npm install -g pnpm@8
+          # Add pnpm to PATH
+          echo "$(npm root -g)/pnpm/bin" >> $GITHUB_PATH
+          echo "PNPM_HOME=$(npm root -g)/pnpm" >> $GITHUB_ENV
+          # Verify installation
+          echo "pnpm version: $(pnpm --version)"
           
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -39,15 +43,15 @@ jobs:
             echo "VITE_APP_DEBUG=false" >> .env
           fi
           
-          # Check available scripts
-          echo "Available scripts in package.json:"
+          # List available scripts for debugging
+          echo "Available scripts:"
           pnpm run || true
           
           # Try to build (if build script exists)
           pnpm run build || echo "Build script not found, skipping build"
         
       - name: Upload artifacts
-        if: success() || failure()  # Run this step even if previous steps failed
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
