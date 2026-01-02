@@ -4,7 +4,7 @@ import NavBar from '@/shared/components/NavBar.vue';
 import { routerLinks } from '@/router/list-routes';
 </script>
 
-<template>
+<template> 
 	<header>
 		<NavBar title="PokémonApp" :links="routerLinks" />
 	</header>
