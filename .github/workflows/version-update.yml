@@ -5,32 +5,32 @@ on:
     types: [closed]
     branches:
       - main
-  
+
 jobs:
   version-update:
     name: Update Version and Create Tag
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout code (merge commit)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.merge_commit_sha }}
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-          run_install: true
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
 
-      - name: Get commits
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: false
+
+      - name: Get commits from PR
         id: get_commits
         uses: actions/github-script@v7
         with:
@@ -40,78 +40,62 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number
             });
-            
-            const hasFeat = commits.some(commit => 
-              commit.commit.message.includes('feat:') || 
+
+            const hasFeat = commits.some(commit =>
+              commit.commit.message.includes('feat:') ||
               commit.commit.message.includes('feat(')
             );
-            
-            return { 
+
+            return {
               hasFeat,
               commitMessages: commits.map(c => c.commit.message).join('\n')
             };
 
-      - name: Bump version
+      - name: Calculate next version
         id: bump-version
         run: |
-          # Obtener la versión actual
           CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Versión actual: $CURRENT_VERSION"
-          
-          # Incrementar según el tipo de cambio
+          echo "Current version: $CURRENT_VERSION"
+
           IFS='.' read -r major minor patch <<< "${CURRENT_VERSION//[^0-9.]/}"
-          
+
           if [[ "${{ steps.get_commits.outputs.hasFeat }}" == "true" ]]; then
-            # Para features, incrementar minor y resetear patch
             minor=$((minor + 1))
             patch=0
-            echo "Se detectó un feature, incrementando versión minor"
+            echo "Feature detected → bump MINOR"
           else
-            # Para fixes, incrementar patch
             patch=$((patch + 1))
-            echo "No se detectaron features, incrementando versión patch"
+            echo "No feature detected → bump PATCH"
           fi
-          
-          NEW_VERSION="$major.$minor.$patch"
-          echo "Nueva versión: $NEW_VERSION"
-          
-          # Actualizar el package.json usando pnpm
-          pnpm version $NEW_VERSION --no-git-tag-version
-          
-          # Configurar las salidas
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "version_updated=true" >> $GITHUB_OUTPUT
 
-      - name: Configurar Git
-        if: steps.bump-version.outputs.version_updated == 'true'
+          NEW_VERSION="$major.$minor.$patch"
+          echo "New version: $NEW_VERSION"
+
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Configure Git
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
 
-      - name: Commit and push changes
-        if: steps.bump-version.outputs.version_updated == 'true'
+      - name: Create and push tag
         env:
-          TOKEN: ${{ secrets.PAT_TOKEN }}  # Usa tu token personal aquí
+          TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          # Configurar autenticación con el token personal
           git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git
-          
-          # Cambiar a la rama main
-          git checkout main
-          
-          # Hacer commit de los cambios
-          git add package.json
-          git commit -m "chore: actualizar versión a ${{ steps.bump-version.outputs.new_version }} [skip ci]"
-          
-          # Crear tag
-          git tag -a "v${{ steps.bump-version.outputs.new_version }}" -m "Versión ${{ steps.bump-version.outputs.new_version }}"
-          
-          # Hacer push de los cambios y tags
-          git push origin main
-          git push --tags
 
-      - name: Mostrar información
+          TAG="v${{ steps.bump-version.outputs.new_version }}"
+
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists. Skipping."
+            exit 0
+          fi
+
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+
+      - name: Show PR information
         run: |
-          echo "Mensajes de commit en este PR:"
+          echo "PR commit messages:"
           echo "${{ steps.get_commits.outputs.commitMessages }}"
-          echo "¿Tiene commit de feature?: ${{ steps.get_commits.outputs.hasFeat }}"
+          echo "Contains feature commit?: ${{ steps.get_commits.outputs.hasFeat }}"
