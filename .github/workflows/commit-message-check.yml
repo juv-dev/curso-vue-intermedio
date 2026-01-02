@@ -27,12 +27,27 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '>=22.0.0'
           cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
 
       - name: Install commitlint
         run: npm install -g @commitlint/cli @commitlint/config-conventional --no-package-lock
+
+      - name: Create commitlint config
+        run: |
+          mkdir -p /tmp/commitlint
+          cat > /tmp/commitlint/config.js << 'EOL'
+          module.exports = {
+            extends: ['@commitlint/config-conventional'],
+            rules: {
+              'type-enum': [2, 'always', ['feat', 'fix']],
+              'header-max-length': [2, 'always', 100],
+              'scope-case': [2, 'always', 'kebab-case'],
+              'subject-case': [0],
+              'scope-empty': [0]
+            }
+          };
+          EOL
 
       - name: Validate PR title
         env:
@@ -50,23 +65,9 @@ jobs:
             exit 0
           fi
 
-          # Create temporary config file
-          cat > commitlint.config.js << 'EOL'
-          module.exports = {
-            extends: ['@commitlint/config-conventional'],
-            rules: {
-              'type-enum': [2, 'always', ['feat', 'fix']],
-              'header-max-length': [2, 'always', 100],
-              'scope-case': [2, 'always', 'kebab-case'],
-              'subject-case': [0],
-              'scope-empty': [0]
-            }
-          };
-          EOL
-
           # Validate title
           echo "Validando: $PR_TITLE"
-          echo "$PR_TITLE" | commitlint --edit -c commitlint.config.js || {
+          echo "$PR_TITLE" | commitlint --edit -c /tmp/commitlint/config.js || {
             echo "::error::❌ El título del PR debe seguir el formato: 'tipo(ámbito): descripción'"
             echo "Formatos válidos:"
             echo "- feat: descripción"
