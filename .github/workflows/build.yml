@@ -16,24 +16,25 @@ jobs:
       - name: Obtener código
         uses: actions/checkout@v4
         
-      - name: Configurar Node.js y pnpm
+      - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
           
-      - name: Verificar instalación
+      - name: Instalar pnpm
         run: |
           # Instalar pnpm de manera global
           npm install -g pnpm@8
-          
           # Asegurar que pnpm esté en el PATH
-          echo "##[add-path]$HOME/.npm-global/bin"
-          echo "##[add-path]$HOME/.npm-global/lib/node_modules/pnpm/bin"
+          echo "$(npm root -g)/pnpm/bin" >> $GITHUB_PATH
+          echo "PNPM_HOME=$(npm root -g)/pnpm" >> $GITHUB_ENV
           
-          # Mostrar información de versión
+      - name: Verificar instalación
+        run: |
+          echo "PATH: $PATH"
+          which pnpm
           pnpm --version
-          pnpm config get store-dir
           
       - name: Configurar entorno
         run: |
