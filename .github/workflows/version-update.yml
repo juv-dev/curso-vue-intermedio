@@ -7,6 +7,7 @@ on:
     paths:
       - '**/package.json'
       - '!**/node_modules/**'
+      - '!**/.github/**'
 
 jobs:
   version-update:
@@ -16,6 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install pnpm
         uses: pnpm/action-setup@v3
@@ -48,32 +50,52 @@ jobs:
                 CURRENT_VERSION=$(node -p "require('./package.json').version")
                 echo "Current version: $CURRENT_VERSION"
                 
-                # Incrementar versión (ejemplo: incrementar patch)
+                # Incrementar versión (solo patch por ahora)
                 IFS='.' read -r major minor patch <<< "${CURRENT_VERSION//[^0-9.]/}"
                 NEW_VERSION="$major.$minor.$((patch + 1))"
                 echo "New version: $NEW_VERSION"
                 
                 # Actualizar el package.json
                 pnpm version $NEW_VERSION --no-git-tag-version
-                
-                # Configurar Git
-                git config --global user.name 'GitHub Actions'
-                git config --global user.email 'actions@github.com'
-                
-                # Commit y tag
-                git add package.json
-                git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
-                git tag -a "v$NEW_VERSION" -m "Version $NEW_VERSION"
               else
                 echo "ℹ️ No package.json found in $project"
+                continue
               fi
+              
               cd "$GITHUB_WORKSPACE"
             else
               echo "⚠️ Project directory not found: $project"
             fi
           done
 
-      - name: Push changes and tags
+      - name: Commit and tag changes
         run: |
-          git push origin main
+          # Configurar Git
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          
+          # Agregar todos los cambios
+          git add .
+          
+          # Verificar si hay cambios para hacer commit
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: bump versions [skip ci]"
+            git push origin main
+            echo "✅ Changes pushed to main"
+          else
+            echo "ℹ️ No changes to commit"
+          fi
+
+          # Crear tags
+          for project in ${{ steps.find-projects.outputs.projects }}; do
+            if [ -d "$project" ] && [ -f "$project/package.json" ]; then
+              cd "$project"
+              VERSION=$(node -p "require('./package.json').version")
+              git tag -a "v$VERSION" -m "Version $VERSION"
+              cd "$GITHUB_WORKSPACE"
+            fi
+          done
+          
+          # Empujar tags
           git push --tags
+          echo "✅ Tags pushed"
