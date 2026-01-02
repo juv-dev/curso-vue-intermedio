@@ -1,10 +1,6 @@
 name: Deploy Project
 
 on:
-  workflow_run:
-    workflows: ["Build Project"]
-    branches: [main, develop]  # Añade esta línea
-    types: [completed]
   push:
     branches: [main, develop]
   workflow_dispatch:
@@ -28,16 +24,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: build-artifacts
-          path: dist
+          node-version: '20'
           
+      - name: Install pnpm
+        run: npm install -g pnpm@8
+        
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+          
+      - name: Build application
+        run: pnpm run build
+        
       - name: Show deployment info
         run: |
           echo "Desplegando en entorno: ${{ github.event.inputs.environment || github.ref_name }}"
-          echo "Directorio de build:"
+          echo "Contenido del directorio dist:"
           ls -la dist/
           
       - name: Complete deployment
