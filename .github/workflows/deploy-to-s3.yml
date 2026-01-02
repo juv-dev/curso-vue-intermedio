@@ -1,8 +1,8 @@
-name: Deploy / deploy
+name: Deploy to S3
 
 on:
   workflow_run:
-    workflows: ["Deploy / Permission"]
+    workflows: ["Deploy / validate-permissions"]
     types: [completed]
   push:
     branches: [main, develop]
