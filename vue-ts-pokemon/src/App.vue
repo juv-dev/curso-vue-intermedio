@@ -5,22 +5,16 @@ import { routerLinks } from '@/router/list-routes';
 </script>
 
 <template>
-  <header>
-    <NavBar 
-      title="PokémonApp" 
-      :links="routerLinks"
-    />
-  </header>
+	<header>
+		<NavBar title="PokémonApp" :links="routerLinks" />
+	</header>
 
-  <RouterView />
+	<RouterView />
 </template>
 
 <style scoped>
 header {
-  line-height: 1.5;
-  max-height: 100vh;
+	line-height: 1.5;
+	max-height: 100vh;
 }
-
-
-
 </style>

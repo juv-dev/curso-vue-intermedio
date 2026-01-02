@@ -3,44 +3,41 @@ import pokemonApi from '../api/pokemonApi';
 import type { PokemonListResponse, Pokemon, PokemonResponse } from "../interfaces/";
 import { sleep } from './sleep';
 
+export const getPokemons = async (): Promise<Pokemon[]> => {
+	await sleep(4);
 
-export const getPokemons = async(): Promise<Pokemon[]> => {
-    await sleep(4);
+	// throw new Error('Error al obtener los pokemons');
 
-    // throw new Error('Error al obtener los pokemons');
+	const { data } = await pokemonApi.get<PokemonListResponse>('/pokemon?limit=45');
 
-    const { data }  = await pokemonApi.get<PokemonListResponse>('/pokemon?limit=45');
+	const pokemonPromises: Promise<Pokemon>[] = [];
 
-    const pokemonPromises: Promise<Pokemon> [] = [];
+	for (const { url } of data.results) {
 
-    for (const { url } of data.results ) {
+		const pokemonPromise = axios.get<PokemonResponse>(url).then(({ data }) => {
+			return {
+				id: data.id,
+				name: data.name,
+				frontSprite: data.sprites.front_default
 
-        const pokemonPromise = axios.get<PokemonResponse>(url).then( ({data}) => {
-            return {
-                id:             data.id,
-                name:           data.name,
-                frontSprite:    data.sprites.front_default
+			}
+		});
+		pokemonPromises.push(pokemonPromise)
+	}
 
-            }
-        });
-        pokemonPromises.push(pokemonPromise)
-    }
+	const pokemons = await Promise.all(pokemonPromises)
 
-    const pokemons = await Promise.all(pokemonPromises)
-
-    
-
-    return pokemons;
+	return pokemons;
 
 }
 
-export const getPokemonByID = async( id: string ): Promise<Pokemon> => {
-    //  await sleep(2);
-    const { data } = await pokemonApi.get<PokemonResponse>(`/pokemon/${id}`);
-    return {
-        id:             data.id,
-        name:           data.name,
-        frontSprite:    data.sprites.front_default
-    }
-  
+export const getPokemonByID = async (id: string): Promise<Pokemon> => {
+	//  await sleep(2);
+	const { data } = await pokemonApi.get<PokemonResponse>(`/pokemon/${id}`);
+	return {
+		id: data.id,
+		name: data.name,
+		frontSprite: data.sprites.front_default
+	}
+
 }

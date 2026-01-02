@@ -6,28 +6,28 @@ const pokemons = ref<Pokemon[]>([]);
 const isLoading = ref(true);
 
 export const usePokemons = () => {
-    onMounted( async() => {
-      
-        const data = await getPokemons();
-        pokemons.value = data;
-        isLoading.value = false;
-    });
+	onMounted(async () => {
 
-    // if(pokemons.value.length === 0 ) {
-    //     getPokemons()
-    //         .then(data =>{
-    //             pokemons.value = data;
-    //             isLoading.value = false;
-    //     });
-    // }
+		const data = await getPokemons();
+		pokemons.value = data;
+		isLoading.value = false;
+	});
 
-  
-    
-    return {    
-        pokemons,
-        isLoading,
+	// if(pokemons.value.length === 0 ) {
+	//     getPokemons()
+	//         .then(data =>{
+	//             pokemons.value = data;
+	//             isLoading.value = false;
+	//     });
+	// }
 
-        count: computed(() => pokemons.value.length ),
 
-    }
+
+	return {
+		pokemons,
+		isLoading,
+
+		count: computed(() => pokemons.value.length),
+
+	}
 }
