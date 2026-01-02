@@ -1,6 +1,9 @@
 name: Create Tag
 
 on:
+  workflow_run:
+    workflows: ["Validate Permissions"]  # Cambiado de "Deploy Project"
+    types: [completed]
   push:
     branches: [main]
     paths:

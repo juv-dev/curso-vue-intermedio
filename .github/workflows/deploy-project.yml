@@ -1,12 +1,48 @@
 name: Deploy Project
 
-on: [workflow_dispatch]
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'main'
+        type: choice
+        options:
+        - main
+        - develop
 
 jobs:
   deploy:
+    name: Deploy Application
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || github.ref_name }}
+    
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
-      - name: Test
-        run: echo "Hola, este es un test de despliegue"
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install pnpm
+        run: npm install -g pnpm@8
+        
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+          
+      - name: Build application
+        run: pnpm run build
+        
+      - name: Show deployment info
+        run: |
+          echo "Desplegando en entorno: ${{ github.event.inputs.environment || github.ref_name }}"
+          echo "Contenido del directorio dist:"
+          ls -la dist/
+          
+      - name: Complete deployment
+        run: echo "Despliegue completado exitosamente"
