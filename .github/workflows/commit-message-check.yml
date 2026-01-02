@@ -5,8 +5,8 @@ on:
     types: [opened, synchronize, reopened, edited]
 
 jobs:
-  'Validar Mensajes de Commit':   # Cambiado para que coincida con el check requerido
-    name: Validar Mensajes de Commit  # Nombre que se muestra en los checks
+  validate-commit-message:  # Usamos un ID sin espacios
+    name: Validar Mensajes de Commit  # Nombre que se muestra en la interfaz
     runs-on: ubuntu-latest
     
     # Skip validation for bots and scheduled runs
