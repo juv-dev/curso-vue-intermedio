@@ -1,0 +1,11 @@
+# .github/workflows/test-deploy.yml
+name: Test Deploy
+
+on: [workflow_dispatch]
+
+jobs:
+  test-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run test
+        run: echo "Este es un test de despliegue"
