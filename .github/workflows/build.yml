@@ -3,7 +3,7 @@ name: Build Project
 
 on:
   workflow_run:
-    workflows: ["Validate Permissions"]  # Cambiado de "Deploy Project"
+    workflows: ["Bump Version"]  # Cambiado de "Deploy Project"
     types: [completed]
   push:
     branches: [main, develop]

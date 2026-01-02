@@ -1,0 +1,49 @@
+# .github/workflows/bump-version.yml
+name: Bump Version
+
+on:
+  workflows: ["Validate Permissions"]  # Cambiado de "Deploy Project"
+  types: [completed]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New version (e.g., 1.0.1)'
+        required: true
+
+jobs:
+  bump-version:
+    name: Bump Version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Update version
+        run: |
+          # Update package.json with new version
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
+          echo "Updated to version: ${{ github.event.inputs.version }}"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: bump version to ${{ github.event.inputs.version }}"
+          title: "chore: bump version to ${{ github.event.inputs.version }}"
+          body: "Automated version bump to ${{ github.event.inputs.version }}"
+          branch: "bump-version-${{ github.event.inputs.version }}"
+          base: main
+          labels: "version-bump"
+          delete-branch: true
