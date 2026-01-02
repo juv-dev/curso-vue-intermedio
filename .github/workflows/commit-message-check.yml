@@ -20,17 +20,17 @@ jobs:
             
             # Crear configuración
             cat > /tmp/commitlint.config.js << 'EOL'
-            module.exports = {
-              extends: ['@commitlint/config-conventional'],
-              rules: {
-                'type-enum': [2, 'always', ['feat', 'fix']],
-                'header-max-length': [2, 'always', 100],
-                'scope-case': [2, 'always', 'kebab-case'],
-                'subject-case': [0],
-                'scope-empty': [0]
-              }
-            };
-            EOL
+module.exports = {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'type-enum': [2, 'always', ['feat', 'fix']],
+    'header-max-length': [2, 'always', 100],
+    'scope-case': [2, 'always', 'kebab-case'],
+    'subject-case': [0],
+    'scope-empty': [0]
+  }
+};
+EOL
 
             # Validar título
             echo "Validando: ${{ github.event.pull_request.title }}"
