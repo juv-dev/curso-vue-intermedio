@@ -3,10 +3,16 @@ name: Load Values
 on:
   push:
     branches: [main, develop]
-    paths:
-      - '.env.*'
-      - '**/.env.*'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to load'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+        - development
+        - production
 
 jobs:
   load-values:
@@ -18,22 +24,30 @@ jobs:
       
       - name: Load environment values
         run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
+          if [ "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || github.ref_name == 'main' && 'production' || 'development' }}" = "production" ]; then
             ENV_FILE=".env.production"
           else
             ENV_FILE=".env.development"
           fi
           
+          echo "Using environment: $ENV_FILE"
+          
           if [ -f "$ENV_FILE" ]; then
             echo "Loading values from $ENV_FILE"
-            # Upload as artifact
+            # Create config directory if it doesn't exist
             mkdir -p config
+            # Copy the environment file
             cp "$ENV_FILE" config/.env
+            echo "Created/updated config/.env"
           else
             echo "Warning: $ENV_FILE not found, creating empty .env"
             mkdir -p config
             touch config/.env
           fi
+          
+          # Show the content (for debugging, but be careful with sensitive data)
+          echo "Environment file content:"
+          cat config/.env | grep -v '^#' || true
           
       - name: Upload environment file
         uses: actions/upload-artifact@v4
