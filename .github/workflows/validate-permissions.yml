@@ -13,8 +13,22 @@ jobs:
     steps:
       - name: Validate target branch
         run: |
-          if [ "${{ github.base_ref }}" != "main" ] && [ "${{ github.base_ref }}" != "develop" ]; then
-            echo "Error: PR must target main or develop, but got ${{ github.base_ref }}"
+          echo "Base ref: ${{ github.base_ref }}"
+          echo "Event name: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          
+          # For pull_request events, the base ref is in github.base_ref
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TARGET_BRANCH="${{ github.base_ref || github.event.pull_request.base.ref }}"
+          else
+            TARGET_BRANCH="${GITHUB_REF#refs/heads/}"
+          fi
+          
+          echo "Target branch: $TARGET_BRANCH"
+          
+          if [ "$TARGET_BRANCH" != "main" ] && [ "$TARGET_BRANCH" != "develop" ]; then
+            echo "Error: PR must target main or develop, but got '$TARGET_BRANCH'"
             exit 1
           fi
-          echo "Valid target branch: ${{ github.base_ref }}"
+          
+          echo "Valid target branch: $TARGET_BRANCH"
