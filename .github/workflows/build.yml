@@ -1,4 +1,4 @@
-name: Deploy / build
+name: Build
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build Application
     runs-on: ubuntu-latest
     env:
       NODE_OPTIONS: --max_old_space_size=4096
