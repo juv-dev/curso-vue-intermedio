@@ -14,21 +14,23 @@ jobs:
   validate-branch:
     runs-on: ubuntu-latest
 
-    # 👉 SOLO valida cuando el evento es pull_request
-    if: github.event_name == 'pull_request'
-
     steps:
       - name: Validate target branch
         run: |
           echo "Event name: ${{ github.event_name }}"
-          echo "Base ref: ${{ github.base_ref }}"
+
+          # 🚨 Si NO es un pull_request, salimos sin error
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "Not a pull_request event, skipping validation"
+            exit 0
+          fi
 
           TARGET_BRANCH="${{ github.base_ref }}"
 
           echo "Target branch: $TARGET_BRANCH"
 
           if [ "$TARGET_BRANCH" != "main" ] && [ "$TARGET_BRANCH" != "develop" ]; then
-            echo "❌ Error: PR must target main or develop, but got '$TARGET_BRANCH'"
+            echo "❌ Error: PR must target main or develop"
             exit 1
           fi
 
