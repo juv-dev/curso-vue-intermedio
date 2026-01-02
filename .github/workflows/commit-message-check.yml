@@ -10,54 +10,37 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '>=22.0.0'
-          cache: 'npm'
-
-      - name: Install commitlint
-        run: npm install -g @commitlint/cli @commitlint/config-conventional --no-package-lock
-
-      - name: Create commitlint config
-        run: |
-          mkdir -p /tmp/commitlint
-          cat > /tmp/commitlint/config.js << 'EOL'
-          module.exports = {
-            extends: ['@commitlint/config-conventional'],
-            rules: {
-              'type-enum': [2, 'always', ['feat', 'fix']],
-              'header-max-length': [2, 'always', 100],
-              'scope-case': [2, 'always', 'kebab-case'],
-              'subject-case': [0],
-              'scope-empty': [0]
-            }
-          };
-          EOL
-
       - name: Validate PR title
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          # Check if PR title is empty
-          if [ -z "$PR_TITLE" ]; then
-            echo "::error::PR title cannot be empty"
-            exit 1
-          fi
+        uses: docker://node:20-alpine
+        with:
+          entrypoint: /bin/sh
+          args: -c |
+            # Instalar commitlint globalmente
+            npm install -g @commitlint/cli @commitlint/config-conventional
+            
+            # Crear configuración
+            cat > /tmp/commitlint.config.js << 'EOL'
+            module.exports = {
+              extends: ['@commitlint/config-conventional'],
+              rules: {
+                'type-enum': [2, 'always', ['feat', 'fix']],
+                'header-max-length': [2, 'always', 100],
+                'scope-case': [2, 'always', 'kebab-case'],
+                'subject-case': [0],
+                'scope-empty': [0]
+              }
+            };
+            EOL
 
-          # Validate title
-          echo "Validando: $PR_TITLE"
-          echo "$PR_TITLE" | commitlint --edit -c /tmp/commitlint/config.js || {
-            echo "::error::❌ El título del PR debe seguir el formato: 'tipo(ámbito): descripción'"
-            echo "Formatos válidos:"
-            echo "- feat: descripción"
-            echo "- feat(ámbito): descripción"
-            echo "- fix: descripción"
-            echo "- fix(ámbito): descripción"
-            exit 1
-          }
-
-          echo "✅ El título del PR es válido"
+            # Validar título
+            echo "Validando: ${{ github.event.pull_request.title }}"
+            echo "${{ github.event.pull_request.title }}" | commitlint --edit -c /tmp/commitlint.config.js || {
+              echo "::error::❌ El título del PR debe seguir el formato: 'tipo(ámbito): descripción'"
+              echo "Formatos válidos:"
+              echo "- feat: descripción"
+              echo "- feat(ámbito): descripción"
+              echo "- fix: descripción"
+              echo "- fix(ámbito): descripción"
+              exit 1
+            }
+            echo "✅ El título del PR es válido"
