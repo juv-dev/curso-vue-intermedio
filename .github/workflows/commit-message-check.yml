@@ -5,17 +5,18 @@ on:
     types: [opened, synchronize, reopened, edited]
 
 jobs:
-  validate-commit-message:  # Usamos un ID sin espacios
-    name: Validar Mensajes de Commit  # Nombre que se muestra en la interfaz
+  validate-commit-message:
+    name: Validar Mensajes de Commit
     runs-on: ubuntu-latest
     
     # Skip validation for bots and scheduled runs
-    continue-on-error: ${{ 
-      github.actor == 'dependabot[bot]' || 
-      github.actor == 'actions-bot' || 
-      github.actor == 'github-actions[bot]' ||
-      github.event_name == 'schedule'
-    }}
+    if: |
+      !(
+        github.actor == 'dependabot[bot]' || 
+        github.actor == 'actions-bot' || 
+        github.actor == 'github-actions[bot]' ||
+        github.event_name == 'schedule'
+      )
     
     steps:
       - name: Checkout code
