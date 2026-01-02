@@ -1,10 +1,6 @@
 name: Validate Permissions
 
 on:
-  workflow_run:
-    workflows: ["Load Values"]
-    types: [completed]
-
   pull_request:
     branches:
       - main
@@ -12,22 +8,17 @@ on:
 
 jobs:
   validate-branch:
+    # 🔒 SOLO corre si el evento es pull_request
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
       - name: Validate target branch
         run: |
           echo "Event name: ${{ github.event_name }}"
-
-          # 🚨 SI NO ES PULL_REQUEST, SALIR SIN ERROR
-          if [ "${{ github.event_name }}" != "pull_request" ]; then
-            echo "Not a pull_request event. Skipping validation."
-            exit 0
-          fi
+          echo "Base ref: ${{ github.base_ref }}"
 
           TARGET_BRANCH="${{ github.base_ref }}"
-
-          echo "Target branch: $TARGET_BRANCH"
 
           if [ "$TARGET_BRANCH" != "main" ] && [ "$TARGET_BRANCH" != "develop" ]; then
             echo "❌ Error: PR must target main or develop"
