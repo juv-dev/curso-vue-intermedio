@@ -2,8 +2,8 @@ name: Bump Version
 
 on:
   pull_request:
-    branches: [ main ]
-    types: [opened, reopened, ready_for_review]
+    branches: [main]
+    types: [opened, reopened, ready_for_review, synchronize]
 
 jobs:
   bump-version:
@@ -13,6 +13,12 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Debug Info
+        run: |
+          echo "PR Head Ref: ${{ github.head_ref }}"
+          echo "Base Ref: ${{ github.base_ref }}"
+          echo "Event Action: ${{ github.event.action }}"
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -22,47 +28,54 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - name: Obtener siguiente versión
+      - name: Get next version
         id: version
         run: |
-          # Obtiene la versión actual
+          # Get current version
           CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Versión actual: ${CURRENT_VERSION}"
+          echo "Current version: ${CURRENT_VERSION}"
           
-          # Incrementa el patch version (1.0.1 -> 1.0.2)
+          # Increment patch version
           IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
           PATCH_VERSION=$((VERSION_PARTS[2] + 1))
           NEXT_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.${PATCH_VERSION}"
           
           echo "version=${NEXT_VERSION}" >> $GITHUB_OUTPUT
-          echo "Siguiente versión: ${NEXT_VERSION}"
+          echo "Next version: ${NEXT_VERSION}"
 
-      - name: Actualizar versión
+      - name: Update version
         run: |
-          # Actualiza package.json
-          npm version ${{ steps.version.outputs.version }} --no-git-tag-version
-          echo "Versión actualizada: ${{ steps.version.outputs.version }}"
+          # Get PR head ref
+          PR_HEAD_REF="${{ github.head_ref || github.event.pull_request.head.ref }}"
+          echo "PR Head Ref: $PR_HEAD_REF"
           
-          # Configura git
+          # Update version in package.json
+          npm pkg set version="${{ steps.version.outputs.version }}"
+          echo "Updated version to: ${{ steps.version.outputs.version }}"
+          
+          # Configure git
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
           
-          # Hace commit de los cambios
+          # Commit changes
           git add package.json
-          git commit -m "feat: bump version to ${{ steps.version.outputs.version }} [skip ci]"
+          git commit -m "chore: bump version to ${{ steps.version.outputs.version }} [skip ci]"
           
-          # Hace push de los cambios a la rama del PR
-          git push origin HEAD:${{ github.head_ref }}
+          # Push changes to PR branch
+          git push origin "HEAD:refs/heads/$PR_HEAD_REF"
 
-      - name: Comentar en el PR
+      - name: Comment on PR
         uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `✅ Versión actualizada a \`${{ steps.version.outputs.version }}\` en este PR.`
-            })
+            try {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `✅ Version updated to \`${{ steps.version.outputs.version }}\` in this PR.` 
+              })
+            } catch (error) {
+              console.error('Error commenting on PR:', error)
+            }
