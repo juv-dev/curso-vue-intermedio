@@ -17,13 +17,13 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '>=22.0.0'  # Puedes cambiarlo a 'lts/*' para la última LTS
+          node-version: '>=22.0.0'
 
       - name: Instalar commitlint
-        run: npx @commitlint/cli@latest @commitlint/config-conventional@latest
+        run: npm install -g @commitlint/cli @commitlint/config-conventional
 
       - name: Validar título del PR
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          echo "$PR_TITLE" | npx @commitlint/cli@latest --edit - --config='{"extends": ["@commitlint/config-conventional"], "rules": {"type-enum": [2, "always", ["feat", "fix"]], "header-max-length": [2, "always", 100], "scope-case": [2, "always", "lower-case"], "subject-case": [0], "scope-empty": [0]}}' || (echo "::error::❌ El título del PR debe seguir el formato: 'tipo(scope): descripción'"; echo "Formatos permitidos:"; echo "- feat: descripción"; echo "- feat(scope): descripción"; echo "- fix: descripción"; echo "- fix(scope): descripción"; exit 1)
+          echo "$PR_TITLE" | npx commitlint --edit - --config='{"extends": ["@commitlint/config-conventional"], "rules": {"type-enum": [2, "always", ["feat", "fix"]], "header-max-length": [2, "always", 100], "scope-case": [2, "always", "lower-case"], "subject-case": [0], "scope-empty": [0]}}' || (echo "::error::❌ El título del PR debe seguir el formato: 'tipo(scope): descripción'"; echo "Formatos permitidos:"; echo "- feat: descripción"; echo "- feat(scope): descripción"; echo "- fix: descripción"; echo "- fix(scope): descripción"; exit 1)
