@@ -13,21 +13,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+     
       - name: Setup environment
         run: |
-          # Create config directory if it doesn't exist
+          # Crear carpeta config si no existe
           mkdir -p config
           
-          # Determine which file to use
+          # Determinar qué archivo usar
           if [ "${{ github.ref_name }}" = "main" ]; then
-            echo "Using production"
+            echo "Usando producción"
             cp .env.production config/.env 2>/dev/null || touch config/.env
           else
-            echo "Using development"
+            echo "Usando desarrollo"
             cp .env.development config/.env 2>/dev/null || touch config/.env
           fi
           
-          # Show content (without sensitive data)
-          echo "Environment file content:"
-          grep -v '^#' config/.env || echo "File is empty"
+          # Mostrar contenido (sin datos sensibles)
+          echo "Contenido del archivo .env:"
+          grep -v '^#' config/.env || echo "Archivo vacío"
