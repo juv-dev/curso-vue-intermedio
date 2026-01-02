@@ -2,7 +2,7 @@ name: Build
 
 on:
   workflow_run:
-    workflows: ["Deploy to S3"]
+    workflows: ["deploy-to-s3"]
     types: [completed]
   push:
     branches: [main, develop]
