@@ -9,51 +9,62 @@ on:
 
 jobs:
   build:
-    name: Build Application
+    name: Construir Aplicación
     runs-on: ubuntu-latest
-    container: node:20-slim
-    env:
-      NODE_OPTIONS: --max_old_space_size=4096
-      
+    
     steps:
-      - name: Checkout code
+      - name: Obtener código
         uses: actions/checkout@v4
         
-      - name: Install pnpm
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          
+      - name: Instalar pnpm
         run: npm install -g pnpm@8
         
-      - name: Verify pnpm
-        run: pnpm --version
-        
-      - name: Download environment file
-        uses: actions/download-artifact@v4
-        with:
-          name: env-file
-          path: ./
+      - name: Configurar entorno
+        run: |
+          # Crear carpeta config si no existe
+          mkdir -p config
           
-      - name: Install dependencies
+          # Copiar el archivo .env correspondiente
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            ENV_SOURCE="config/.env.production"
+          else
+            ENV_SOURCE="config/.env.development"
+          fi
+          
+          if [ -f "$ENV_SOURCE" ]; then
+            cp "$ENV_SOURCE" .env
+            echo "Usando $ENV_SOURCE"
+          else
+            echo "Creando .env vacío"
+            echo "VITE_APP_TITLE=Mi Aplicación" > .env
+            echo "VITE_APP_VERSION=1.0.0" >> .env
+            echo "VITE_APP_DEBUG=false" >> .env
+          fi
+          
+          # Mostrar el contenido del .env (sin exponer secretos)
+          echo "Contenido de .env:"
+          cat .env | grep -v -e '^VITE_' || true
+          
+      - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
         
-      - name: Run tests
+      - name: Ejecutar pruebas
         run: pnpm test
         
-      - name: Build application
+      - name: Construir aplicación
         run: pnpm build
         
-      - name: Upload build artifacts
+      - name: Subir artefactos
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: |
             dist/
             !**/*.map
-          retention-days: 1
-          
-      - name: Upload build info
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-info
-          path: |
-            package.json
-            pnpm-lock.yaml
           retention-days: 1
