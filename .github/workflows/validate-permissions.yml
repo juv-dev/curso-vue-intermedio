@@ -5,23 +5,27 @@ on:
     workflows: ["Load Values"]
     types: [completed]
   pull_request:
-    branches: [main, develop]
-    types: [opened, synchronize, reopened]
-  workflow_dispatch:
+    branches:
+      - main
+      - develop
 
 jobs:
-  validate-permissions:
-    name: Validate Permissions
+  validate-branch:
+    # 🔒 SOLO corre si el evento es pull_request
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+
     steps:
-      - name: Check PR author
+      - name: Validate target branch
         run: |
-          echo "Running basic validation checks..."
-          echo "PR author: ${{ github.actor}}"
-          
-      - name: Check branch protection
-        run: |
-          if [ "${{ github.base_ref }}" != "main" ] && [ "${{ github.base_ref }}" != "develop" ]; then
-            echo "Error: PR must target main or develop"
+          echo "Event name: ${{ github.event_name }}"
+          echo "Base ref: ${{ github.base_ref }}"
+
+          TARGET_BRANCH="${{ github.base_ref }}"
+
+          if [ "$TARGET_BRANCH" != "main" ] && [ "$TARGET_BRANCH" != "develop" ]; then
+            echo "❌ Error: PR must target main or develop"
             exit 1
           fi
+
+          echo "✅ Valid target branch: $TARGET_BRANCH"

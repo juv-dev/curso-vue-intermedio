@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-      "build": "pnpm -r run build && pnpm run collect:dist",
+    "build": "pnpm -r run build && pnpm run collect:dist",
     "collect:dist": "node scripts/collect-dist.js"
   },
   "keywords": [],
