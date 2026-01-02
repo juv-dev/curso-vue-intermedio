@@ -18,8 +18,8 @@ on:
         - develop
 
 jobs:
-  deploy:
-    name: Deploy 
+  deploy-to-s3:
+    name: Deploy to S3 
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment || github.ref_name }}
     
