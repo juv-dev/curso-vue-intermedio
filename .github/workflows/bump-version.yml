@@ -18,14 +18,18 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Node.js and pnpm
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
+          cache: 'npm'
 
       - name: Install pnpm
-        run: npm install -g pnpm@latest
+        run: |
+          npm install -g pnpm
+          echo "##[add-path]/home/runner/.npm-global/bin"
+          echo "##[add-path]/usr/local/share/pnpm"
+          pnpm --version
 
       - name: Install dependencies
         run: pnpm install
