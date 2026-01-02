@@ -19,9 +19,9 @@ jobs:
         run: |
           echo "Event name: ${{ github.event_name }}"
 
-          # 🚨 Si NO es un pull_request, salimos sin error
+          # 🚨 SI NO ES PULL_REQUEST, SALIR SIN ERROR
           if [ "${{ github.event_name }}" != "pull_request" ]; then
-            echo "Not a pull_request event, skipping validation"
+            echo "Not a pull_request event. Skipping validation."
             exit 0
           fi
 
