@@ -1,19 +1,34 @@
-security:
-  needs: check-and-update
-  runs-on: ubuntu-latest
-  if: always()
-  steps:
-    - uses: actions/checkout@v4
-    
-    - name: Configurar Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '>=22.0.0'
-        cache: 'npm'
-    
-    - name: Instalar dependencias
-      run: npm install  # Opción 1: Usar npm install
-      # run: npm install --package-lock-only && npm ci  # Opción 2: Generar y usar npm ci
-    
-    - name: Ejecutar auditoría de seguridad
-      run: npm audit --audit-level=high
+name: Security Scan
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  check-limit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar límite de minutos
+        env:
+          GITHUB_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          chmod +x .github/scripts/check-actions-limit.sh
+          ./.github/scripts/check-actions-limit.sh
+
+  security:
+    needs: check-limit
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '>=22.0.0'
+          cache: 'npm'
+      - name: Instalar dependencias
+        run: npm install
+      - name: Ejecutar auditoría de seguridad
+        run: npm audit --audit-level=high
