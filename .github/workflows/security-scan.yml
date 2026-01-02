@@ -19,24 +19,18 @@ jobs:
           version: 8
           run_install: true
 
-      - name: Find projects with package.json
-        id: find-projects
+      - name: Find and audit projects
         run: |
-          # Buscar todos los package.json que no estén en node_modules
-          projects=$(find . -name "package.json" -not -path "*/node_modules/*" -not -path "./.github/*" -exec dirname {} \; | sed 's|^\./||' | jq -R -s -c 'split("\n") | map(select(. != ""))')
-          echo "projects=$projects" >> $GITHUB_OUTPUT
-          echo "Found projects: $projects"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '>=22.0.0'
-          cache: 'pnpm'
-          cache-dependency-path: '${{ fromJson(steps.find-projects.outputs.projects)[0] }}/pnpm-lock.yaml'
-
-      - name: Run security audit for each project
-        run: |
-          for project in ${{ steps.find-projects.outputs.projects }}; do
+          # Lista de proyectos a analizar
+          projects=("vue-ts-pokemon" "vue-ts-pinia-intro" "vue-ts-issues-app")
+          
+          for project in "${projects[@]}"; do
+            # Saltar directorios que empiezan con punto
+            if [[ "$project" == .* ]]; then
+              echo "⏩ Skipping hidden directory: $project"
+              continue
+            fi
+            
             if [ -d "$project" ]; then
               echo "🔍 Auditing project: $project"
               cd "$project"
