@@ -91,9 +91,20 @@ jobs:
       - name: Commit and tag
         if: steps.bump-version.outputs.version_updated == 'true'
         run: |
+          # Configurar autenticación
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          
+          # Cambiar a la rama main
+          git checkout main
+          
+          # Hacer commit de los cambios
           git add package.json
           git commit -m "chore: bump version to ${{ steps.bump-version.outputs.new_version }} [skip ci]"
+          
+          # Crear tag
           git tag -a "v${{ steps.bump-version.outputs.new_version }}" -m "Version ${{ steps.bump-version.outputs.new_version }}"
+          
+          # Hacer push de los cambios y tags
           git push origin main
           git push --tags
 
