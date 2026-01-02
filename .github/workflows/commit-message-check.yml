@@ -15,9 +15,9 @@ jobs:
         with:
           script: |
             const { title } = context.payload.pull_request;
-            console.log('Título del PR recibido:', title);
+            console.log('Título del PR recibido:', JSON.stringify(title));
             
-            if (!/^(feat|fix)(\([^)]+\))?:/i.test(title)) {
+            if (!/^\s*(feat|fix)(\([^)]+\))?:/i.test(title)) {
               core.setFailed(`❌ El título del PR debe comenzar con 'feat:' o 'fix:' (ej: 'feat: algo', 'fix: algo', 'feat(sección): algo')`);
             } else {
               console.log('✅ El título del PR es válido');
