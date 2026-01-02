@@ -1,0 +1,24 @@
+name: Check PR Title
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  validate-pr-title:
+    name: Validar Título del PR
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Validate PR title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { title } = context.payload.pull_request;
+            console.log('Título del PR recibido:', JSON.stringify(title));
+            
+            if (!/^\s*(feat|fix)(\([^)]+\))?:/i.test(title)) {
+              core.setFailed(`❌ El título del PR debe comenzar con 'feat:' o 'fix:' (ej: 'feat: algo', 'fix: algo', 'feat(sección): algo')`);
+            } else {
+              console.log('✅ El título del PR es válido');
+            }
