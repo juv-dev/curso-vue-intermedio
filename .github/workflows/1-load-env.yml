@@ -1,0 +1,64 @@
+name: Load Values  # Changed from "Load Environment" to match filename
+
+on:
+  workflow_run:
+    workflows: ["Check PR Title"]
+    types: [completed]
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  load-env:
+    name: Load Environment
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup environment
+        run: |
+          # Mostrar estructura de archivos
+          echo "Estructura del proyecto:"
+          ls -la
+          
+          # Crear carpeta config
+          mkdir -p config
+          echo "Carpeta config creada"
+          
+          # Verificar archivos .env
+          echo "Buscando archivos .env..."
+          ls -la .env* 2>/dev/null || echo "No se encontraron archivos .env"
+          
+          # Copiar archivo según la rama
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "Configurando para producción"
+            if [ -f ".env.production" ]; then
+              cp .env.production config/.env
+              echo "Archivo .env.production copiado"
+            else
+              touch config/.env
+              echo "Se creó archivo .env vacío (producción)"
+            fi
+          else
+            echo "Configurando para desarrollo"
+            if [ -f ".env.development" ]; then
+              cp .env.development config/.env
+              echo "Archivo .env.development copiado"
+            else
+              touch config/.env
+              echo "Se creó archivo .env vacío (desarrollo)"
+            fi
+          fi
+          
+          # Mostrar contenido (sin comentarios)
+          echo -e "\nContenido de config/.env:"
+          grep -v '^#' config/.env || echo "El archivo está vacío"
+          
+          # Verificar si se creó el archivo
+          echo -e "\nVerificando archivo:"
+          ls -la config/.

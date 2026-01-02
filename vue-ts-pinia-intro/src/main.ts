@@ -16,7 +16,7 @@ VueQueryPlugin.install(app, {
 	queryClientConfig: {
 		defaultOptions: {
 			queries: {
-				cacheTime: 1000 * 60, // 1 minuto
+				gcTime: 1000 * 60, // 1 minuto
 			}
 		}
 	}

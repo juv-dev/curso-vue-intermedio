@@ -1,6 +1,9 @@
 name: Security Scan
 
 on:
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
   pull_request:
     branches: [main, develop]
     types: [opened, synchronize, reopened]
