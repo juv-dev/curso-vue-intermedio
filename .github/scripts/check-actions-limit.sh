@@ -4,27 +4,14 @@
 # Verificar que las variables de entorno estén configuradas
 if [ -z "$GITHUB_TOKEN" ] || [ -z "$GITHUB_REPOSITORY" ]; then
   echo "Error: Las variables GITHUB_TOKEN y GITHUB_REPOSITORY son requeridas"
-  echo "Asegúrate de configurar el secreto ADMIN_TOKEN en GitHub Secrets"
   exit 1
 fi
 
-# Verificar si jq está instalado
+# Instalar jq si no está instalado
 if ! command -v jq &> /dev/null; then
   echo "Instalando jq..."
   sudo apt-get update && sudo apt-get install -y jq
 fi
-
-# Función para manejar errores de la API
-handle_api_error() {
-  local response="$1"
-  local error_msg="$2"
-  
-  if [ -z "$response" ] || [ "$(echo "$response" | jq -r '.message?')" != "null" ]; then
-    echo "Error: $error_msg"
-    echo "Respuesta: $response"
-    exit 1
-  fi
-}
 
 # Obtener el límite de la API
 echo "🔍 Verificando límite de minutos de GitHub Actions..."
@@ -32,10 +19,20 @@ RESPONSE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
   -H "Accept: application/vnd.github.v3+json" \
   "https://api.github.com/rate_limit")
 
-handle_api_error "$RESPONSE" "No se pudo obtener la información de límite de la API"
+# Verificar si la respuesta es válida
+if [ -z "$RESPONSE" ]; then
+  echo "Error: No se pudo obtener la información de límite de la API"
+  exit 1
+fi
 
 # Extraer minutos restantes
 REMAINING=$(echo "$RESPONSE" | jq -r '.resources.actions.remaining')
+if [ -z "$REMAINING" ]; then
+  echo "Error: No se pudo obtener el límite de minutos restantes"
+  echo "Respuesta de la API: $RESPONSE"
+  exit 1
+fi
+
 echo "⏱️  Minutos restantes: $REMAINING"
 
 # Si quedan suficientes minutos, salir con éxito
@@ -52,7 +49,12 @@ CURRENT_CONFIG=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
   -H "Accept: application/vnd.github.v3+json" \
   "https://api.github.com/repos/$GITHUB_REPOSITORY/branches/main/protection")
 
-handle_api_error "$CURRENT_CONFIG" "No se pudo obtener la configuración de protección de la rama"
+# Verificar si se obtuvo la configuración correctamente
+if [ -z "$CURRENT_CONFIG" ] || [ "$(echo "$CURRENT_CONFIG" | jq -r '.message?')" = "Not Found" ]; then
+  echo "Error: No se pudo obtener la configuración de protección de la rama"
+  echo "Respuesta: $CURRENT_CONFIG"
+  exit 1
+fi
 
 # Crear payload sin required_status_checks
 echo "🔄 Actualizando configuración de protección..."
@@ -67,7 +69,11 @@ RESPONSE=$(echo "$PAYLOAD" | \
   "https://api.github.com/repos/$GITHUB_REPOSITORY/branches/main/protection" \
   -d @-)
 
-handle_api_error "$RESPONSE" "Error al actualizar la configuración de protección"
+# Verificar si hubo errores
+if [ "$(echo "$RESPONSE" | jq -r '.message?')" != "null" ]; then
+  echo "Error al actualizar la configuración: $RESPONSE"
+  exit 1
+fi
 
 echo "✅ Verificación de estado desactivada temporalmente"
 exit 1

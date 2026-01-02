@@ -18,7 +18,7 @@ jobs:
           ./.github/scripts/check-actions-limit.sh
 
   security:
-    needs: check-limit
+    needs: Check Limit
     runs-on: ubuntu-latest
     if: always()
     steps:
