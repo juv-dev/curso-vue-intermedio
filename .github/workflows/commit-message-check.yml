@@ -6,7 +6,7 @@ on:
 
 jobs:
   validate-pr-title:
-    name: Validar Título del PR
+    name: Validate PR Title
     runs-on: ubuntu-latest
     
     steps:
@@ -15,10 +15,10 @@ jobs:
         with:
           script: |
             const { title } = context.payload.pull_request;
-            console.log('Título del PR recibido:', JSON.stringify(title));
+            console.log('PR title received:', JSON.stringify(title));
             
             if (!/^\s*(feat|fix)(\([^)]+\))?:/i.test(title)) {
-              core.setFailed(`❌ El título del PR debe comenzar con 'feat:' o 'fix:' (ej: 'feat: algo', 'fix: algo', 'feat(sección): algo')`);
+              core.setFailed(`❌ PR title must start with 'feat:' or 'fix:' (e.g., 'feat: something', 'fix: something', 'feat(section): something')`);
             } else {
-              console.log('✅ El título del PR es válido');
+              console.log('✅ PR title is valid');
             }

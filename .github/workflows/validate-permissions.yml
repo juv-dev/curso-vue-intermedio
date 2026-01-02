@@ -1,4 +1,4 @@
-name: Deploy / validate-permissions
+name: Deploy/validate-permissions
 
 on:
   workflow_run:
