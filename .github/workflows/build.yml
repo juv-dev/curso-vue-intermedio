@@ -18,16 +18,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Set up Node.js
+      - name: Setup Node.js with pnpm
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
           
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
+      - name: Install pnpm explicitly
+        run: |
+          npm install -g pnpm@8
+          pnpm --version
           
       - name: Download environment file
         uses: actions/download-artifact@v4
@@ -36,8 +36,10 @@ jobs:
           path: ./
           
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --version
+          
       - name: Run tests
         run: pnpm test
         
