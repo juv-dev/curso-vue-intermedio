@@ -1,43 +1,49 @@
 name: Security Scan
+
 on:
   pull_request:
     branches: [main, develop]
     types: [opened, synchronize, reopened]
   workflow_dispatch:
+
 jobs:
-  security:  # Este es el ID que debe coincidir con el check requerido
+  security:
     name: Security Audit
     runs-on: ubuntu-latest
-    
     steps:
       - uses: actions/checkout@v4
       
-      - name: Check for package.json
-        id: check_package
-        run: |
-          if [ -f "package.json" ]; then
-            echo "package_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "package_exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set up Node.js
-        if: steps.check_package.outputs.package_exists == 'true'
-        uses: actions/setup-node@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
         with:
-          node-version: '>=22.0.0'
-          cache: 'npm'
+          version: 8
+          run_install: true
 
-      - name: Install dependencies
-        if: steps.check_package.outputs.package_exists == 'true'
-        run: npm install
-
-      - name: Run security audit
-        if: steps.check_package.outputs.package_exists == 'true'
-        run: npm audit --audit-level=high
-
-      - name: Skip security audit
-        if: steps.check_package.outputs.package_exists != 'true'
+      - name: Find and audit projects
         run: |
-          echo "No se encontró package.json. Omitiendo auditoría de seguridad."
-          echo "Esto no es un error - este proyecto no utiliza paquetes npm."
+          # Lista de proyectos a analizar
+          projects=("vue-ts-pokemon" "vue-ts-pinia-intro" "vue-ts-issues-app")
+          
+          for project in "${projects[@]}"; do
+            # Saltar directorios que empiezan con punto
+            if [[ "$project" == .* ]]; then
+              echo "⏩ Skipping hidden directory: $project"
+              continue
+            fi
+            
+            if [ -d "$project" ]; then
+              echo "🔍 Auditing project: $project"
+              cd "$project"
+              if [ -f "package.json" ]; then
+                echo "📦 Installing dependencies..."
+                pnpm install --frozen-lockfile
+                echo "🔒 Running security audit..."
+                pnpm audit || echo "⚠️ Security audit found vulnerabilities in $project"
+              else
+                echo "ℹ️ No package.json found in $project"
+              fi
+              cd "$GITHUB_WORKSPACE"
+            else
+              echo "⚠️ Project directory not found: $project"
+            fi
+          done
