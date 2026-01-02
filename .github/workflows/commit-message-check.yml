@@ -15,18 +15,9 @@ jobs:
         with:
           script: |
             const { title } = context.payload.pull_request;
-            const validTypes = ['feat', 'fix'];
-            const pattern = new RegExp(`^(${validTypes.join('|')})(\\([a-z0-9-]+\\))?: [a-zA-Z0-9- ]+$`);
             
-            if (!pattern.test(title)) {
-              core.setFailed(`❌ El título del PR debe seguir el formato: 'tipo(ámbito): descripción'\n` +
-                `Donde:\n` +
-                `- 'tipo' puede ser: ${validTypes.join(' o ')}\n` +
-                `- 'ámbito' es opcional y debe estar en minúsculas con guiones\n` +
-                `- 'descripción' debe ser una descripción corta\n\n` +
-                `Ejemplos válidos:\n` +
-                `- feat: agregar nueva funcionalidad\n` +
-                `- fix(ui): corregir error en el menú`);
+            if (!/^(feat|fix):/.test(title)) {
+              core.setFailed(`❌ El título del PR debe comenzar con 'feat:' o 'fix:'`);
             } else {
               console.log('✅ El título del PR es válido');
             }
