@@ -1,10 +1,11 @@
+# .github/workflows/create-tag.yml
 name: Create Tag
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g., 1.0.1)'
+        description: 'Version to tag'
         required: true
 
 jobs:
@@ -12,8 +13,7 @@ jobs:
     name: Create Tag
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pull-requests: write
+      contents: write
 
     steps:
       - name: Checkout code
@@ -22,34 +22,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify version
-        run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Current version: $CURRENT_VERSION"
-          echo "Requested version: ${{ github.event.inputs.version }}"
-          if [ "$CURRENT_VERSION" == "${{ github.event.inputs.version }}" ]; then
-            echo "Version already matches, no changes needed"
-            echo "version_updated=false" >> $GITHUB_OUTPUT
-          else
-            echo "version_updated=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create Pull Request
-        if: steps.version.outputs.version_updated == 'true'
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: bump version to ${{ github.event.inputs.version }}"
-          title: "chore: bump version to ${{ github.event.inputs.version }}"
-          body: "Automated version bump to ${{ github.event.inputs.version }}"
-          branch: "bump-version-${{ github.event.inputs.version }}"
-          base: main
-          labels: "version-bump"
-          delete-branch: true
-          branch-suffix: short-commit-hash
-
-      - name: Create Tag
-        if: steps.version.outputs.version_updated == 'false'
+      - name: Create and push tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
