@@ -7,29 +7,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-limit:
-    name: Check Actions Limit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Verify and update limits
-        env:
-          GITHUB_TOKEN: ${{ secrets.ADMIN_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          chmod +x .github/scripts/check-actions-limit.sh
-          if ! ./.github/scripts/check-actions-limit.sh; then
-            echo "Skipping security check due to low minutes"
-            # Exit with success to continue the workflow
-            exit 0
-          fi
-
-  security:
+  security:  # Nombre del job que debe coincidir con el check requerido
     name: Security Audit
-    needs: check-limit
     runs-on: ubuntu-latest
-    if: always()
+    
     steps:
       - uses: actions/checkout@v4
       
@@ -60,5 +41,5 @@ jobs:
       - name: Skip security audit
         if: steps.check_package.outputs.package_exists != 'true'
         run: |
-          echo "No package.json found. Skipping security audit."
-          echo "This is not an error - this project doesn't use npm packages."
+          echo "No se encontró package.json. Omitiendo auditoría de seguridad."
+          echo "Esto no es un error - este proyecto no utiliza paquetes npm."
