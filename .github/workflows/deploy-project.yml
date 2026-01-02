@@ -1,8 +1,8 @@
-name: Deploy Project
+name: Deploy Project  # This is the workflow name
 
 on:
   workflow_run:
-    workflows: ["Validate Permissions"]
+    workflows: ["Validate Permissions"]  # Make sure this matches exactly
     types: [completed]
   push:
     branches: [main, develop]
@@ -18,8 +18,8 @@ on:
         - develop
 
 jobs:
-  deploy-project:
-    name: Deploy Application
+  deploy:  # Simplified job ID
+    name: Deploy to Production
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment || github.ref_name }}
     
