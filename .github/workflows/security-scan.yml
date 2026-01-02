@@ -7,12 +7,35 @@ on:
   workflow_dispatch:
 
 jobs:
+  find-projects:
+    name: Find Projects
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.find-projects.outputs.projects }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Find projects with package.json
+        id: find-projects
+        run: |
+          # Buscar todos los package.json que no estén en node_modules
+          projects=$(find . -name "package.json" -not -path "*/node_modules/*" -not -path "./.github/*" -exec dirname {} \; | sed 's|^\./||' | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          echo "projects=$projects" >> $GITHUB_OUTPUT
+          echo "Found projects: $projects"
+
   security:
     name: Security Audit
+    needs: find-projects
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: ${{ fromJson(needs.find-projects.outputs.projects) }}
+      fail-fast: false
+
     defaults:
       run:
-        working-directory: ./vue-ts-issues-app
+        working-directory: ${{ matrix.project }}
     
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +45,7 @@ jobs:
         with:
           node-version: '>=22.0.0'
           cache: 'pnpm'
-          cache-dependency-path: 'vue-ts-issues-app/pnpm-lock.yaml'
+          cache-dependency-path: '${{ matrix.project }}/pnpm-lock.yaml'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -39,16 +62,16 @@ jobs:
             echo "package_exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Install dependencies
+      - name: Install dependencies - ${{ matrix.project }}
         if: steps.check_package.outputs.package_exists == 'true'
         run: pnpm install --frozen-lockfile
 
-      - name: Run security audit
+      - name: Run security audit - ${{ matrix.project }}
         if: steps.check_package.outputs.package_exists == 'true'
         run: pnpm audit
 
-      - name: Skip security audit
+      - name: Skip security audit - ${{ matrix.project }}
         if: steps.check_package.outputs.package_exists != 'true'
         run: |
-          echo "No se encontró package.json. Omitiendo auditoría de seguridad."
+          echo "No se encontró package.json en ${{ matrix.project }}. Omitiendo auditoría de seguridad."
           echo "Esto no es un error - este proyecto no utiliza paquetes npm."
