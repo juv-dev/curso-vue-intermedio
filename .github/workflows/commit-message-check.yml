@@ -9,22 +9,11 @@ jobs:
     name: Validar Mensajes de Commit
     runs-on: ubuntu-latest
     
-    # Skip validation for bots and scheduled runs
-    if: |
-      !(
-        github.actor == 'dependabot[bot]' || 
-        github.actor == 'actions-bot' || 
-        github.actor == 'github-actions[bot]' ||
-        github.event_name == 'schedule'
-      )
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Install Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '>=22.0.0'
@@ -57,12 +46,6 @@ jobs:
           if [ -z "$PR_TITLE" ]; then
             echo "::error::PR title cannot be empty"
             exit 1
-          fi
-
-          # Skip validation on retries
-          if [[ "${{ github.run_attempt }}" -gt 1 ]]; then
-            echo "⚠️  Warning: Skipping validation on attempt #${{ github.run_attempt }}"
-            exit 0
           fi
 
           # Validate title
