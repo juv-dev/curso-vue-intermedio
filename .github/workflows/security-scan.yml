@@ -13,6 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: true
+
       - name: Find projects with package.json
         id: find-projects
         run: |
@@ -27,12 +33,6 @@ jobs:
           node-version: '>=22.0.0'
           cache: 'pnpm'
           cache-dependency-path: '${{ fromJson(steps.find-projects.outputs.projects)[0] }}/pnpm-lock.yaml'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-          run_install: true
 
       - name: Run security audit for each project
         run: |
