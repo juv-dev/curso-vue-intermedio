@@ -56,6 +56,6 @@ jobs:
         with:
           name: build-artifacts
           path: |
-            dist/
+            **/dist/**
             !**/*.map
           retention-days: 1
