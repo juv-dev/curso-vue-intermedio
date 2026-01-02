@@ -30,6 +30,9 @@ jobs:
           node-version: '>=22.0.0'
           cache: 'npm'
 
+      - name: Install commitlint globally
+        run: npm install -g @commitlint/cli @commitlint/config-conventional
+
       - name: Validate PR title
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
@@ -46,12 +49,6 @@ jobs:
             exit 0
           fi
 
-          # Install commitlint if not present
-          if ! command -v commitlint &> /dev/null; then
-            echo "Installing commitlint..."
-            npm install -g @commitlint/cli @commitlint/config-conventional
-          fi
-
           # Commitlint configuration
           CONFIG='{
             "extends": ["@commitlint/config-conventional"],
@@ -66,7 +63,7 @@ jobs:
 
           # Validate title
           echo "Validando: $PR_TITLE"
-          echo "$PR_TITLE" | npx commitlint --edit - --config="$CONFIG" || {
+          echo "$PR_TITLE" | commitlint --edit - --config="$CONFIG" || {
             echo "::error::❌ El título del PR debe seguir el formato: 'tipo(ámbito): descripción'"
             echo "Formatos válidos:"
             echo "- feat: descripción"
