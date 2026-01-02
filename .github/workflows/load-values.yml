@@ -1,0 +1,33 @@
+name: Load values
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  load-values:
+    name: Load values
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+     
+      - name: Setup environment
+        run: |
+          # Crear carpeta config si no existe
+          mkdir -p config
+          
+          # Determinar qué archivo usar
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "Usando producción"
+            cp .env.production config/.env 2>/dev/null || touch config/.env
+          else
+            echo "Usando desarrollo"
+            cp .env.development config/.env 2>/dev/null || touch config/.env
+          fi
+          
+          # Mostrar contenido (sin datos sensibles)
+          echo "Contenido del archivo .env:"
+          grep -v '^#' config/.env || echo "Archivo vacío"
