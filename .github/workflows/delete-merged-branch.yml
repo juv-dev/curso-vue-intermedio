@@ -3,6 +3,7 @@ name: Delete Branch After Merge
 on:
   pull_request:
     types: [closed]
+    branches: [main]
 
 jobs:
   delete-merged-branch:
