@@ -1,9 +1,12 @@
-name: Load Environment
+name: 1-load-env  # Changed from "Load Environment" to match filename
 
 on:
   workflow_run:
-    workflows: ["PR Title Check"]
+    workflows: ["Check PR Title"]
     types: [completed]
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
   push:
     branches: [main, develop]
   workflow_dispatch:
@@ -58,4 +61,4 @@ jobs:
           
           # Verificar si se creó el archivo
           echo -e "\nVerificando archivo:"
-          ls -la config/
+          ls -la config/.
