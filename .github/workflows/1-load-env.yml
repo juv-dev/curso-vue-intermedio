@@ -16,6 +16,6 @@ on:
 
 jobs:
   load-values:
-    uses: juv-dev/workflows-frontend/.github/workflows/load-values.yml@v1
+    uses: juv-dev/workflows-frontend/.github/workflows/load-values.yml@main
     with:
       environment: ${{ github.ref_name == 'main' && 'production' || 'development' }}
