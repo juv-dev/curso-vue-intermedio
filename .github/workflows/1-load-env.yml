@@ -1,21 +1,13 @@
 name: Load Values
 
 on:
-  workflow_run:
-    workflows: ["Check PR Title"]
-    types: [completed]
-
   pull_request:
     branches: [main, develop]
-    types: [opened, synchronize, reopened]
-
   push:
     branches: [main, develop]
 
-  workflow_dispatch:
-
 jobs:
   load-values:
-    uses: juv-dev/workflows-frontend/.github/workflows/load-values.yml@main
+    uses: juv-dev/workflows-frontend/.github/workflows/load-env.yml@main
     with:
       environment: ${{ github.ref_name == 'main' && 'production' || 'development' }}
