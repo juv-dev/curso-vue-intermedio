@@ -1,31 +1,11 @@
 name: Validate Permissions
 
 on:
-  workflow_run:
-    workflows: ["Load Values"]
-    types: [completed]
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
 
 jobs:
   validate-branch:
-    # 🔒 SOLO corre si el evento es pull_request
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Validate target branch
-        run: |
-          echo "Event name: ${{ github.event_name }}"
-          echo "Base ref: ${{ github.base_ref }}"
-
-          TARGET_BRANCH="${{ github.base_ref }}"
-
-          if [ "$TARGET_BRANCH" != "main" ] && [ "$TARGET_BRANCH" != "develop" ]; then
-            echo "❌ Error: PR must target main or develop"
-            exit 1
-          fi
-
-          echo "✅ Valid target branch: $TARGET_BRANCH"
+    uses: devops/workflows/.github/workflows/validate-branch.yml@main
+    with:
+      allowed_branches: "main,develop"

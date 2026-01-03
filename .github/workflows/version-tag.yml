@@ -1,12 +1,9 @@
 name: Version and Tag
 
 on:
-  workflow_run:
-    workflows: ["Validate Permissions"]
-    types: [completed]
   pull_request:
     types: [closed]
-    branches: [main, develop]
+    branches: [main]
 
 jobs:
   tag-version:
@@ -17,35 +14,29 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout merge commit
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.merge_commit_sha }}
 
-      - name: Detect version bump
+      - uses: actions/github-script@v7
         id: bump
-        uses: actions/github-script@v7
         with:
           script: |
-            const commits = await github.rest.pulls.listCommits({
+            const { data: commits } = await github.rest.pulls.listCommits({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number
             });
 
-            const hasFeat = commits.data.some(c =>
-              c.commit.message.startsWith('feat')
-            );
+            return {
+              hasFeat: commits.some(c => c.commit.message.startsWith('feat'))
+            };
 
-            return { hasFeat };
-
-      - name: Calculate next tag
-        id: version
+      - id: version
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           VERSION=${LAST_TAG#v}
-
           IFS='.' read -r major minor patch <<< "$VERSION"
 
           if [ "${{ steps.bump.outputs.hasFeat }}" = "true" ]; then
@@ -55,10 +46,8 @@ jobs:
             patch=$((patch + 1))
           fi
 
-          NEW_TAG="v$major.$minor.$patch"
-          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "tag=v$major.$minor.$patch" >> $GITHUB_OUTPUT
 
-      - name: Create tag
-        run: |
+      - run: |
           git tag "${{ steps.version.outputs.tag }}"
           git push origin "${{ steps.version.outputs.tag }}"

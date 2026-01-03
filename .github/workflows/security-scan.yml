@@ -1,53 +1,16 @@
 name: Security Scan
 
 on:
-  workflow_run:
-    workflows: ["Build"]
-    types: [completed]
   pull_request:
     branches: [main, develop]
     types: [opened, synchronize, reopened]
+  push:
+    branches: [main, develop]
   workflow_dispatch:
 
 jobs:
   security:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-          run_install: true
-
-      - name: Run security audit
-        run: |
-          # Lista de proyectos a analizar
-          projects=("vue-ts-pokemon" "vue-ts-pinia-intro" "vue-ts-issues-app")
-          
-          for project in "${projects[@]}"; do
-            # Saltar directorios que empiezan con punto
-            if [[ "$project" == .* ]]; then
-              echo "⏩ Skipping hidden directory: $project"
-              continue
-            fi
-            
-            if [ -d "$project" ]; then
-              echo "🔍 Auditing project: $project"
-              cd "$project"
-              if [ -f "package.json" ]; then
-                echo "📦 Installing dependencies..."
-                # Usamos --no-frozen-lockfile para evitar el error de autoInstallPeers
-                pnpm install --no-frozen-lockfile
-                echo "🔒 Running security audit..."
-                pnpm audit || echo "⚠️ Security audit found vulnerabilities in $project"
-              else
-                echo "ℹ️ No package.json found in $project"
-              fi
-              cd "$GITHUB_WORKSPACE"
-            else
-              echo "⚠️ Project directory not found: $project"
-            fi
-          done
+    uses: devops/workflows/.github/workflows/snyk-security.yml@main
+    with:
+      node-version: '20'
+      severity: high

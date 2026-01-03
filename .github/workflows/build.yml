@@ -1,69 +1,21 @@
 name: Build Project
 
-
 on:
-  workflow_run:
-    workflows: ["Bump Version"]  # Cambiado de "Deploy Project"
-    types: [completed]
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Bump Version"]
+    types: [completed]
 
 jobs:
-  build-project:
-    name: Build Application
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          
-      - name: Install pnpm
-        run: |
-          # Install pnpm globally using npm
-          npm install -g pnpm@8
-          # Add pnpm to PATH
-          echo "$(npm root -g)/pnpm/bin" >> $GITHUB_PATH
-          echo "PNPM_HOME=$(npm root -g)/pnpm" >> $GITHUB_ENV
-          # Verify installation
-          echo "pnpm version: $(pnpm --version)"
-          
-      - name: Install dependencies
-        run: |
-          # Always use --no-frozen-lockfile in CI to handle missing lockfiles
-          pnpm install --no-frozen-lockfile
-          # Generate a new lockfile
-          pnpm install
-          
-      - name: Build application
-        run: |
-          # Create a basic .env file if it doesn't exist
-          if [ ! -f ".env" ]; then
-            echo "VITE_APP_TITLE=My App" > .env
-            echo "VITE_APP_VERSION=1.0.0" >> .env
-            echo "VITE_APP_DEBUG=false" >> .env
-          fi
-          
-          # List available scripts for debugging
-          echo "Available scripts:"
-          pnpm run || true
-          
-          # Try to build (if build script exists)
-          pnpm run build || echo "Build script not found, skipping build"
-        
-      - name: Upload artifacts
-        if: success() || failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: |
-            **/dist/**
-            !**/*.map
-          retention-days: 1
+  build:
+    if: |
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    uses: devops/workflows/.github/workflows/build-project.yml@main
+    with:
+      node_version: '20'
+      create_env: true
