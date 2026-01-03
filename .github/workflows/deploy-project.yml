@@ -7,16 +7,18 @@ on:
       - 'package.json'
 
 jobs:
-  deploy:
+  get-version:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Get version
-        id: version
+
+      - id: version
         run: echo "version=$(node -p 'require("./package.json").version')" >> $GITHUB_OUTPUT
-      
-      - name: Deploy
-        run: |
-          echo "🚀 Desplegando versión ${{ steps.version.outputs.version }}"
-          # Aquí van los pasos de despliegue reales
+
+  deploy:
+    needs: get-version
+    uses: devops/workflows/.github/workflows/deploy-project.yml@main
+    with:
+      version: ${{ needs.get-version.outputs.version }}

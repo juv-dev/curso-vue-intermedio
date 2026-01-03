@@ -1,17 +1,10 @@
-name: Delete Branch After Merge
+name: Check PR Title
 
 on:
   pull_request:
-    types: [closed]
-    branches: [main]
+    branches: [main, develop]
+    types: [opened, synchronize, reopened, edited]
 
 jobs:
-  delete-merged-branch:
-    if: github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete branch
-        uses: dawidd6/action-delete-branch@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branches: ${{ github.event.pull_request.head.ref }}
+  check-pr-title:
+    uses: juv-dev/workflows-frontend/.github/workflows/check-pr-title.yml@v1
