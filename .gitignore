@@ -27,3 +27,10 @@ coverage
 *.sln
 *.sw?
 .env
+
+# Local AI tooling (Gentle / SDD / skill registry) - NEVER commit
+openspec/
+openspec.config.yaml
+.atl/
+.claude/
+CLAUDE.md
