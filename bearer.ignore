@@ -1,0 +1,7 @@
+{
+  "eafa39277b54b4afe401862019362a3a_0": {
+    "author": "juv-dev",
+    "comment": "Course/learning build script in scripts/collect-dist.js. fs.readdirSync uses local project root path, not user-controlled input — false positive in this context.",
+    "ignored_at": "2026-05-23T09:00:00.000Z"
+  }
+}
