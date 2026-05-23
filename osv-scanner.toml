@@ -1,0 +1,98 @@
+# OSV-Scanner configuration for educational/course repository
+# Monorepo of Vue course sub-projects with intentionally older deps for learning
+
+[[PackageOverrides]]
+name = "axios"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — not production"
+
+[[PackageOverrides]]
+name = "ajv"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — devDep"
+
+[[PackageOverrides]]
+name = "brace-expansion"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — transitive dep"
+
+[[PackageOverrides]]
+name = "esbuild"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — older bundler"
+
+[[PackageOverrides]]
+name = "flatted"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — transitive"
+
+[[PackageOverrides]]
+name = "follow-redirects"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — transitive of axios"
+
+[[PackageOverrides]]
+name = "html-minifier"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — build tool"
+
+[[PackageOverrides]]
+name = "lodash"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject"
+
+[[PackageOverrides]]
+name = "minimatch"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — transitive"
+
+[[PackageOverrides]]
+name = "path-to-regexp"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — transitive"
+
+[[PackageOverrides]]
+name = "picomatch"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — transitive"
+
+[[PackageOverrides]]
+name = "postcss"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — older Vite tooling"
+
+[[PackageOverrides]]
+name = "qs"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — transitive of axios"
+
+[[PackageOverrides]]
+name = "rollup"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — older bundler"
+
+[[PackageOverrides]]
+name = "serialize-javascript"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — transitive"
+
+[[PackageOverrides]]
+name = "vite"
+ecosystem = "npm"
+ignore = true
+reason = "Course subproject — older Vite versions for lessons"
